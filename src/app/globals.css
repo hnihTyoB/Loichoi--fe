@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Cinnamoroll Light Palette: Cream White Base + Baby Blue CTA + Mocha Brown Text + Blush Pink */
+    --background: 210 20% 99%;         /* #FDFDFE Kem sữa */
+    --foreground: 25 35% 33%;          /* #6F4E37 Nâu mocha ấm */
+    
+    --card: 0 0% 100%;                 /* #FFFFFF */
+    --card-foreground: 25 35% 33%;     /* #6F4E37 */
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 25 35% 33%;
+    
+    --primary: 213 95% 82%;            /* #A2CFFE Xanh baby Cinnamoroll */
+    --primary-foreground: 25 35% 25%;  /* Nâu đậm nổi bật trên xanh baby */
+    
+    --secondary: 348 100% 91%;         /* #FFD1DC Hồng má hồng */
+    --secondary-foreground: 25 35% 33%;
+    
+    --muted: 214 70% 96%;              /* #EBF3FE Xanh mây nhạt */
+    --muted-foreground: 25 20% 50%;    /* Nâu mocha nhạt */
+    
+    --accent: 349 100% 87%;            /* #FFB7C5 Hồng đào */
+    --accent-foreground: 25 35% 25%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 213 80% 90%;             /* Viền xanh pastel mềm */
+    --input: 213 80% 90%;
+    --ring: 213 95% 82%;
+    --radius: 1.5rem;                  /* 24px bo góc lớn mềm mại */
+  }
+
+  .dark {
+    /* Cinnamoroll Dark Mode: Deep Midnight Pastel */
+    --background: 224 40% 12%;
+    --foreground: 210 40% 95%;
+    
+    --card: 224 35% 16%;
+    --card-foreground: 210 40% 95%;
+    
+    --popover: 224 35% 16%;
+    --popover-foreground: 210 40% 95%;
+    
+    --primary: 213 95% 75%;
+    --primary-foreground: 224 40% 12%;
+    
+    --secondary: 348 70% 30%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 224 30% 20%;
+    --muted-foreground: 215 20% 70%;
+    
+    --accent: 349 70% 35%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 62.8% 45%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 224 30% 25%;
+    --input: 224 30% 25%;
+    --ring: 213 95% 75%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground selection:bg-kawaii-blush selection:text-kawaii-mocha;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom Bouncy & Cloud Utilities */
+.bouncy-hover {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease-out;
+}
+.bouncy-hover:hover {
+  transform: scale(1.04) translateY(-2px);
+}
+
+.cloud-card {
+  border-radius: 1.75rem;
+  box-shadow: 0 10px 30px -5px rgba(162, 207, 254, 0.35);
+  border: 1.5px solid rgba(205, 228, 254, 0.6);
+}

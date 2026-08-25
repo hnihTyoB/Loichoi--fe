@@ -1,0 +1,16 @@
+{
+  "id": "agent-kinh-doanh",
+  "name": "Business & Sales Agent",
+  "description": "Agent chuyên trách phân tích thị trường, hợp đồng kinh tế và chiến lược kinh doanh",
+  "system_prompt_file": "prompts/system/chuyen-gia-phap-ly.md",
+  "temperature": 0.2,
+  "max_tokens": 4096,
+  "skills": ["phan-tich-hop-dong", "tom-tat-tai-lieu", "tao-bao-cao-tuan"],
+  "tools": [
+    "agents/tools/truy-van-api.md",
+    "agents/tools/tim-kiem-tai-lieu.md",
+    "prompts/tools/tim-kiem-web.md"
+  ],
+  "eval_scorecard": "evals/scorecards/scorecard-tieu-chuan-100.md",
+  "min_pass_score": 85
+}

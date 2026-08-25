@@ -1,0 +1,18 @@
+[
+  {
+    "chunk_id": "CHUNK-SURVEY-001",
+    "source": "data/raw/2026-08-15_tai-lieu-khao-sat_v01.json",
+    "category": "Customer Survey",
+    "industry": "Công nghệ thông tin",
+    "pii_masked": true,
+    "content": "Khách hàng doanh nghiệp ngành Công nghệ thông tin [TẬP_ĐOÀN_ALPHA] (Đại diện: [NGUYỄN_H_NAM], Ngân sách: 500.000.000 VNĐ/năm, AI Readiness: 8.5/10). Khó khăn chính: Mất nhiều thời gian tổng hợp báo cáo từ 10 phòng ban, dữ liệu phân tán trên nhiều bảng tính, khó kiểm soát rủi ro pháp lý hợp đồng quốc tế. Nhu cầu tính năng: Tự động tạo báo cáo, phân tích hợp đồng pháp lý, trợ lý tra cứu nội bộ."
+  },
+  {
+    "chunk_id": "CHUNK-SURVEY-002",
+    "source": "data/raw/2026-08-15_tai-lieu-khao-sat_v01.json",
+    "category": "Customer Survey",
+    "industry": "Bán lẻ & Thương mại điện tử",
+    "pii_masked": true,
+    "content": "Khách hàng doanh nghiệp ngành Bán lẻ & E-commerce [BETA_RETAIL] (Đại diện: [VŨ_T_MAI], Ngân sách: 250.000.000 VNĐ/năm, AI Readiness: 7.0/10). Khó khăn chính: Phản hồi chăm sóc khách hàng ban đêm bị chậm trễ, chưa có công cụ phát hiện bất thường doanh số bán hàng, chi phí CSKH tăng cao. Nhu cầu tính năng: Chatbot CSKH 24/7, phát hiện doanh thu bất thường, dự báo tồn kho."
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "id": "agent-bao-cao",
+  "name": "Reporting Agent",
+  "description": "Agent chuyên trách phân tích số liệu và tự động tạo báo cáo KPI",
+  "system_prompt_file": "prompts/system/tro-ly-nghien-cuu.md",
+  "temperature": 0.1,
+  "max_tokens": 4096,
+  "skills": ["tao-bao-cao-tuan", "viet-bao-cao-tham-tra"],
+  "tools": [
+    "agents/tools/xu-ly-file-excel.md",
+    "prompts/tools/truy-van-csdl.md",
+    "agents/tools/gui-email.md"
+  ],
+  "eval_scorecard": "evals/scorecards/scorecard-tieu-chuan-100.md",
+  "min_pass_score": 85
+}

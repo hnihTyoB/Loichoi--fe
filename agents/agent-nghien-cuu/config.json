@@ -1,0 +1,16 @@
+{
+  "id": "agent-nghien-cuu",
+  "name": "Research Agent",
+  "description": "Agent chuyên trách nghiên cứu, đọc hiểu và tổng hợp tài liệu chuyên sâu",
+  "system_prompt_file": "prompts/system/tro-ly-nghien-cuu.md",
+  "temperature": 0.2,
+  "max_tokens": 4096,
+  "skills": ["tom-tat-tai-lieu", "phan-tich-hop-dong"],
+  "tools": [
+    "agents/tools/tim-kiem-tai-lieu.md",
+    "agents/tools/doc-google-drive.md",
+    "prompts/tools/tim-kiem-web.md"
+  ],
+  "eval_scorecard": "evals/scorecards/scorecard-tieu-chuan-100.md",
+  "min_pass_score": 80
+}

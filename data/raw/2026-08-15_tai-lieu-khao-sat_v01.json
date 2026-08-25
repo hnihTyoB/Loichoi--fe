@@ -1,0 +1,40 @@
+{
+  "survey_id": "SURVEY-AI-2026-08",
+  "topic": "Đánh giá mức độ hài lòng và nhu cầu tự động hóa của khách hàng doanh nghiệp",
+  "conducted_date": "2026-08-15",
+  "sample_size": 150,
+  "responses": [
+    {
+      "respondent_id": "RESP-001",
+      "company_name": "Tập đoàn Công nghệ Alpha",
+      "contact_person": "Nguyễn Hoàng Nam",
+      "email": "nam.nh@alphatech.vn",
+      "phone": "0912345678",
+      "industry": "Công nghệ thông tin",
+      "pain_points": [
+        "Mất quá nhiều thời gian tổng hợp báo cáo tuần từ 10 phòng ban",
+        "Dữ liệu phân tán trên nhiều file Excel và Google Sheets",
+        "Khó kiểm soát rủi ro pháp lý khi ký hợp đồng với đối tác nước ngoài"
+      ],
+      "ai_readiness_score": 8.5,
+      "budget_vnd_per_year": 500000000,
+      "expected_features": ["Tự động tạo báo cáo", "Phân tích hợp đồng pháp lý", "Trợ lý tra cứu nội bộ"]
+    },
+    {
+      "respondent_id": "RESP-002",
+      "company_name": "Công ty TNHH Bán lẻ Beta",
+      "contact_person": "Vũ Thị Mai",
+      "email": "mai.vu@betaretail.com",
+      "phone": "0987654321",
+      "industry": "Bán lẻ & Thương mại điện tử",
+      "pain_points": [
+        "Phản hồi tin nhắn chăm sóc khách hàng bị chậm trễ vào ban đêm",
+        "Chưa có công cụ phát hiện bất thường trong doanh số bán hàng",
+        "Chi phí vận hành đội ngũ CSKH tăng cao"
+      ],
+      "ai_readiness_score": 7.0,
+      "budget_vnd_per_year": 250000000,
+      "expected_features": ["Chatbot CSKH 24/7", "Phát hiện doanh thu bất thường", "Dự báo tồn kho"]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "trace_id": "TRACE-ERROR-DEBUG-20260825-002",
+  "session_timestamp": "2026-08-25T22:18:00Z",
+  "agent_id": "agent-nghien-cuu",
+  "task": "Truy xuất danh sách chi phí marketing trên kênh TikTok Ads",
+  "steps": [
+    {
+      "step_number": 1,
+      "type": "REASONING",
+      "thought": "Người dùng yêu cầu số liệu chi phí marketing TikTok Ads. Cần tra cứu trong data/processed/.",
+      "tool_called": null
+    },
+    {
+      "step_number": 2,
+      "type": "TOOL_INVOCATION",
+      "tool_name": "search_documents",
+      "parameters": {
+        "query": "chi phí marketing TikTok Ads"
+      },
+      "tool_response_status": "EMPTY_RESULT",
+      "data_retrieved_summary": "Không tìm thấy đoạn văn bản nào khớp với từ khóa trong data/processed/*"
+    },
+    {
+      "step_number": 3,
+      "type": "GUARDRAIL_ACTIVATION",
+      "rule_triggered": "prompts/system/tro-ly-nghien-cuu.md#Guardrails",
+      "reason": "Phát hiện nguy cơ Hallucination do dữ liệu đầu vào không tồn tại",
+      "action_taken": "Từ chối suy diễn số liệu và thông báo tường minh cho người dùng về việc dữ liệu không có trong tài liệu"
+    },
+    {
+      "step_number": 4,
+      "type": "DEBUG_ANALYSIS",
+      "diagnosis_answers": {
+        "data_read": "data/processed/ (RAG index)",
+        "tool_called": "search_documents",
+        "error_cause": "Dữ liệu nguồn không chứa bảng chi phí marketing, chỉ có bảng doanh thu bán hàng",
+        "why_not_accurate_otherwise": "Nếu không có Guardrail chặn, AI có thể tự sinh số liệu giả định gây sai lệch báo cáo"
+      }
+    }
+  ],
+  "execution_duration_ms": 1150,
+  "errors_encountered": 0,
+  "final_status": "SAFE_REJECTION_PASS"
+}

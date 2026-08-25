@@ -1,0 +1,47 @@
+{
+  "dataset_metadata": {
+    "source_file": "data/raw/2026-07-24_bao-cao-doanh-thu_v01.csv",
+    "cleaned_at": "2026-08-25T22:00:00Z",
+    "total_records": 10,
+    "currency": "VND",
+    "status": "VALIDATED"
+  },
+  "summary_metrics": {
+    "gross_revenue_vnd": 578500000,
+    "total_discount_vnd": 38600000,
+    "net_revenue_vnd": 539900000,
+    "total_units_sold": 1240,
+    "average_order_value_vnd": 53990000
+  },
+  "breakdown_by_channel": {
+    "Online Web": {
+      "transactions_count": 4,
+      "net_revenue_vnd": 157900000,
+      "percentage": 29.25
+    },
+    "Mobile App": {
+      "transactions_count": 3,
+      "net_revenue_vnd": 158000000,
+      "percentage": 29.26
+    },
+    "Dai Ly": {
+      "transactions_count": 3,
+      "net_revenue_vnd": 202500000,
+      "percentage": 37.51
+    }
+  },
+  "breakdown_by_category": {
+    "Goi Doanh Nghiep B2B": {
+      "units": 45,
+      "net_revenue_vnd": 202500000
+    },
+    "Goi Dich Vu Premium": {
+      "units": 355,
+      "net_revenue_vnd": 163000000
+    },
+    "Goi Dich Vu Standard": {
+      "units": 800,
+      "net_revenue_vnd": 152900000
+    }
+  }
+}

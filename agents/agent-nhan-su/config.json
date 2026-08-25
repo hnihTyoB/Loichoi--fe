@@ -1,0 +1,16 @@
+{
+  "id": "agent-nhan-su",
+  "name": "HR Agent",
+  "description": "Agent chuyên trách chính sách nhân sự, phúc lợi và lịch hẹn phỏng vấn",
+  "system_prompt_file": "prompts/system/tro-ly-nghien-cuu.md",
+  "temperature": 0.2,
+  "max_tokens": 4096,
+  "skills": ["tom-tat-tai-lieu", "viet-bao-cao-tham-tra"],
+  "tools": [
+    "agents/tools/tim-kiem-tai-lieu.md",
+    "agents/tools/tao-lich.md",
+    "agents/tools/gui-email.md"
+  ],
+  "eval_scorecard": "evals/scorecards/scorecard-tieu-chuan-100.md",
+  "min_pass_score": 85
+}
