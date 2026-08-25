@@ -24,6 +24,6 @@ export const authService = {
   },
 
   getDiscordOAuthUrl(): string {
-    return `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8888"}/api/v1/auth/discord`;
+    return `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:9999"}/api/v1/auth/discord`;
   },
 };

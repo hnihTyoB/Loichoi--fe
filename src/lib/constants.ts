@@ -1,7 +1,7 @@
 export const APP_CONFIG = {
   name: process.env.NEXT_PUBLIC_APP_NAME || "Loichoi",
-  apiUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8888/api/v1",
-  backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8888",
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:9999/api/v1",
+  backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:9999",
   discordClientId: process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || "",
   discordRedirectUri: process.env.NEXT_PUBLIC_DISCORD_REDIRECT_URI || "http://localhost:3000/callback/discord",
 } as const;

@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/v1/:path*",
-        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8888"}/api/v1/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:9999"}/api/v1/:path*`,
       },
     ];
   },

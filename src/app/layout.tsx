@@ -32,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning className={`${quicksand.variable} ${nunito.variable}`}>
-      <body className={quicksand.className}>
+      <body className={quicksand.className} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

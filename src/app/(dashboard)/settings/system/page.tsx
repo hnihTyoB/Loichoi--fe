@@ -44,7 +44,7 @@ export default function SystemSettingsPage() {
           </div>
           <div className="flex justify-between border-b border-kawaii-sky/30 pb-2.5">
             <span className="text-kawaii-mocha/70">Backend API Endpoint</span>
-            <span className="font-mono text-xs font-bold text-kawaii-warmbrown">{process.env.NEXT_PUBLIC_API_URL || "http://localhost:8888/api/v1"}</span>
+            <span className="font-mono text-xs font-bold text-kawaii-warmbrown">{process.env.NEXT_PUBLIC_API_URL || "http://localhost:9999/api/v1"}</span>
           </div>
           <div className="flex justify-between border-b border-kawaii-sky/30 pb-2.5">
             <span className="text-kawaii-mocha/70">Chế độ Xác thực (Auth)</span>

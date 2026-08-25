@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const cookieHeader = request.headers.get("cookie") || "";
 
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8888";
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:9999";
     const res = await fetch(`${backendUrl}/api/v1/auth/me`, {
       headers: {
         cookie: cookieHeader,
