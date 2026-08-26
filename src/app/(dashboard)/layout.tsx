@@ -18,9 +18,11 @@ export default function DashboardLayout({
   const { t, isMounted } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
-  const isPublicRoute = ["/keyboards", "/categories", "/trending"].some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
+  const isPublicRoute = pathname === "/keyboards" ||
+    (pathname.startsWith("/keyboards/") && !pathname.startsWith("/keyboards/manage")) ||
+    pathname === "/categories" ||
+    (pathname.startsWith("/categories/") && !pathname.startsWith("/categories/manage")) ||
+    pathname === "/trending";
 
   useEffect(() => {
     if (!isPublicRoute && !isLoading && !isAuthenticated) {

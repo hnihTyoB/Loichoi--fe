@@ -22,7 +22,7 @@ import { useCategories, useKeyboards } from "@/hooks/use-keyboards";
 import { useTranslation } from "@/hooks/use-translation";
 import { getPublicCopy } from "@/lib/public-copy";
 
-const discordUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.com";
+const discordUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/DVu3TTv3";
 
 function SectionTitle({
   title,

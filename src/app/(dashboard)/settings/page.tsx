@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bot, Server } from "lucide-react";
+import { Bot, CalendarClock, Construction, Server } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/use-translation";
 
@@ -20,6 +20,18 @@ export default function SettingsPage() {
       description: isMounted ? t.settings.systemDesc : "Quản lý tham số toàn cục, chế độ bảo trì và các giới hạn API.",
       href: "/settings/system",
       icon: Server,
+    },
+    {
+      title: isMounted && t.common.active ? "Maintenance" : "Chế độ bảo trì",
+      description: "Bật chế độ chặn toàn bộ hoặc chỉ đọc và cấu hình danh sách được phép bỏ qua.",
+      href: "/settings/maintenance",
+      icon: Construction,
+    },
+    {
+      title: "Scheduled Jobs",
+      description: "Theo dõi lịch và kích hoạt thủ công các tác vụ nền.",
+      href: "/settings/cron",
+      icon: CalendarClock,
     },
   ];
 

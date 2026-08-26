@@ -1,95 +1,41 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Shield } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { rbacService } from "@/services/rbac.service";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowRight, Plus, Shield, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { AsyncState, ConfirmDialog, Field, PageHeader } from "@/components/shared/admin-ui";
+import { PermissionGate } from "@/components/shared/permission-gate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useTranslation } from "@/hooks/use-translation";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { PERMISSIONS } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/errors";
+import { rbacService } from "@/services/rbac.service";
+import type { Role } from "@/types/rbac.types";
+
+const schema = z.object({ name: z.string().min(2).max(50).regex(/^[A-Z0-9_]+$/, "Chỉ dùng chữ hoa, số và dấu gạch dưới"), description: z.string().max(255) });
+type Values = z.infer<typeof schema>;
 
 export default function RolesPage() {
-  const { t, isMounted } = useTranslation();
-
-  const { data: roles, isLoading } = useQuery({
-    queryKey: ["roles", "list"],
-    queryFn: () => rbacService.getRoles(),
-  });
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight text-kawaii-mocha">
-            {isMounted ? t.roles.title : "Phân Quyền Vai Trò (RBAC)"}
-          </h1>
-          <p className="text-sm text-kawaii-mocha/70">
-            {isMounted ? t.roles.subtitle : "Quản lý ma trận phân quyền theo từng hành động và tài nguyên"}
-          </p>
-        </div>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {isLoading ? (
-          <div className="col-span-full py-12 text-center text-sm font-bold text-kawaii-mocha/60">
-            {isMounted ? t.roles.loading : "Đang tải danh sách vai trò..."}
-          </div>
-        ) : (
-          roles?.map((role) => (
-            <Card key={role.id} className="rounded-[2.25rem] flex flex-col justify-between hover:shadow-cloud-hover transition-all duration-300 bouncy-hover">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-kawaii-sky/40 text-kawaii-mocha shadow-inner">
-                      <Shield className="h-5 w-5" />
-                    </div>
-                    <CardTitle className="text-lg">{role.name}</CardTitle>
-                  </div>
-                  {role.isSystem ? (
-                    <Badge variant="secondary" className="font-bold">
-                      {isMounted ? t.common.system : "Hệ thống"}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="font-bold">
-                      {isMounted ? t.common.custom : "Tùy biến"}
-                    </Badge>
-                  )}
-                </div>
-                <CardDescription className="mt-2 text-xs">
-                  {role.description || "Không có mô tả chi tiết."}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-xs font-bold text-kawaii-mocha">
-                  {isMounted ? t.roles.permissionsGranted : "Số quyền được cấp"}:{" "}
-                  <span className="font-black text-kawaii-warmbrown">{role.permissions?.length || 0} permissions</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {role.permissions?.slice(0, 4).map((p) => (
-                    <Badge key={p.id} variant="outline" className="text-[10px] font-mono bg-kawaii-cloud/50 border-kawaii-sky">
-                      {p.name}
-                    </Badge>
-                  ))}
-                  {(role.permissions?.length || 0) > 4 && (
-                    <span className="text-[11px] font-bold text-kawaii-warmbrown flex items-center">
-                      +{(role.permissions?.length || 0) - 4} khác
-                    </span>
-                  )}
-                </div>
-                <div className="pt-2">
-                  <Link href={`/roles/${role.id}`}>
-                    <Button variant="outline" size="sm" className="w-full gap-1.5 rounded-full font-bold">
-                      <span>{isMounted ? t.roles.viewMatrix : "Xem Ma Trận Quyền"}</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-    </div>
-  );
+  const client = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [deleting, setDeleting] = useState<Role | null>(null);
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: "", description: "" } });
+  const roles = useQuery({ queryKey: ["roles", "list"], queryFn: rbacService.getRoles });
+  const create = useMutation({ mutationFn: (values: Values) => rbacService.createRole({ ...values, permissionIds: [] }), onSuccess: () => { toast.success("Đã tạo vai trò"); setOpen(false); reset(); client.invalidateQueries({ queryKey: ["roles"] }); }, onError: (error) => toast.error(getErrorMessage(error)) });
+  const remove = useMutation({ mutationFn: rbacService.deleteRole, onSuccess: () => { toast.success("Đã xóa vai trò"); setDeleting(null); client.invalidateQueries({ queryKey: ["roles"] }); }, onError: (error) => toast.error(getErrorMessage(error)) });
+  return <PermissionGate permission={PERMISSIONS.ROLE_READ} fallback={<AsyncState error />}><div className="space-y-6"><PageHeader icon={Shield} title="Vai trò và phân quyền" description="Quản lý vai trò tùy biến và ma trận quyền theo tài nguyên." actions={<PermissionGate permission={PERMISSIONS.ROLE_CREATE}><Button onClick={() => setOpen(true)}><Plus />Tạo vai trò</Button></PermissionGate>} />
+    <AsyncState loading={roles.isLoading} error={roles.isError} empty={!roles.isLoading && !roles.isError && !roles.data?.length} emptyText="Chưa có vai trò" />
+    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{roles.data?.map((role) => <Card key={role.id}><CardContent className="pt-6 md:pt-8"><div className="flex items-start justify-between"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-kawaii-sky/30"><Shield className="h-5 w-5" /></div><h2 className="font-black text-kawaii-mocha">{role.name}</h2></div><Badge variant={role.isSystem ? "secondary" : "outline"}>{role.isSystem ? "Hệ thống" : "Tùy biến"}</Badge></div><p className="mt-4 min-h-10 text-sm text-kawaii-mocha/60">{role.description || "Chưa có mô tả"}</p><p className="mt-4 text-sm font-bold text-kawaii-mocha">{role.permissions?.length ?? 0} quyền</p><div className="mt-5 flex gap-2"><Button asChild variant="outline" size="sm" className="flex-1"><Link href={`/roles/${role.id}`}>Mở ma trận<ArrowRight /></Link></Button>{!role.isSystem && <PermissionGate permission={PERMISSIONS.ROLE_DELETE}><Button variant="destructive" size="icon" onClick={() => setDeleting(role)} aria-label="Xóa"><Trash2 /></Button></PermissionGate>}</div></CardContent></Card>)}</div>
+    <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>Tạo vai trò tùy biến</DialogTitle><DialogDescription>Sau khi tạo, mở ma trận để gán quyền.</DialogDescription></DialogHeader><form className="space-y-4" onSubmit={handleSubmit((values) => create.mutate(values))}><Field label="Tên vai trò" error={errors.name?.message}><Input {...register("name")} placeholder="CONTENT_MANAGER" /></Field><Field label="Mô tả" error={errors.description?.message}><Textarea {...register("description")} /></Field><DialogFooter><Button type="button" variant="outline" onClick={() => setOpen(false)}>Hủy</Button><Button type="submit" disabled={create.isPending}>{create.isPending ? "Đang tạo..." : "Tạo vai trò"}</Button></DialogFooter></form></DialogContent></Dialog>
+    <ConfirmDialog open={Boolean(deleting)} onOpenChange={(next) => !next && setDeleting(null)} title="Xóa vai trò?" description="Chỉ vai trò tùy biến không còn người dùng mới có thể xóa." busy={remove.isPending} onConfirm={() => deleting && remove.mutate(deleting.id)} />
+  </div></PermissionGate>;
 }

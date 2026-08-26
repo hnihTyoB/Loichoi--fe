@@ -1,11 +1,16 @@
 import { apiClient } from "@/lib/api-client";
-import { ApiResponse, PaginationParams } from "@/types/api.types";
-import { User } from "@/types/user.types";
+import { ApiResponse } from "@/types/api.types";
+import { CreateUserPayload, User } from "@/types/user.types";
 
 export const userService = {
-  async getUsers(params?: PaginationParams): Promise<ApiResponse<User[]>> {
+  async getUsers(params?: { page?: number; limit?: number; email?: string; fullName?: string; roleName?: string; isActive?: boolean }): Promise<ApiResponse<User[]>> {
     const res = await apiClient.get<ApiResponse<User[]>>("/users", { params });
     return res.data;
+  },
+
+  async createUser(payload: CreateUserPayload): Promise<User> {
+    const res = await apiClient.post<ApiResponse<User>>("/users", payload);
+    return res.data.data;
   },
 
   async getUserById(id: string): Promise<User> {

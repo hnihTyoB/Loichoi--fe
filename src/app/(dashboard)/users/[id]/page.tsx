@@ -56,7 +56,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
               <label className="text-xs font-medium text-muted-foreground">
                 {isMounted ? t.common.fullName : "Họ và Tên"}
               </label>
-              <Input value={user?.name || ""} readOnly />
+              <Input value={user?.fullName || user?.name || ""} readOnly />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">

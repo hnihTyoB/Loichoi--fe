@@ -1,0 +1,11 @@
+"use client";
+import * as React from "react";
+import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { cn } from "@/lib/utils";
+export const Tabs = TabsPrimitive.Root;
+export const TabsList = React.forwardRef<React.ElementRef<typeof TabsPrimitive.List>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>>(({ className, ...props }, ref) => <TabsPrimitive.List ref={ref} className={cn("inline-flex rounded-full border-2 border-kawaii-sky/35 bg-kawaii-cloud/40 p-1", className)} {...props} />);
+TabsList.displayName = "TabsList";
+export const TabsTrigger = React.forwardRef<React.ElementRef<typeof TabsPrimitive.Trigger>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>>(({ className, ...props }, ref) => <TabsPrimitive.Trigger ref={ref} className={cn("rounded-full px-5 py-2 text-sm font-bold text-kawaii-mocha/60 transition data-[state=active]:bg-card data-[state=active]:text-kawaii-mocha data-[state=active]:shadow-sm", className)} {...props} />);
+TabsTrigger.displayName = "TabsTrigger";
+export const TabsContent = React.forwardRef<React.ElementRef<typeof TabsPrimitive.Content>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>>(({ className, ...props }, ref) => <TabsPrimitive.Content ref={ref} className={cn("mt-5 focus:outline-none", className)} {...props} />);
+TabsContent.displayName = "TabsContent";

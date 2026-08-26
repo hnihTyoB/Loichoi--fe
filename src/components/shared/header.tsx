@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Grid2X2, Keyboard, LogIn, LogOut, Menu, User as UserIcon, UserPlus } from "lucide-react";
+import { Bell, Flame, Grid2X2, Keyboard, LogIn, LogOut, Menu, User as UserIcon, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "./brand-logo";
 import { ThemeToggle } from "./theme-toggle";
@@ -13,6 +13,7 @@ import { useTranslation } from "@/hooks/use-translation";
 import { authService } from "@/services/auth.service";
 import { getPublicCopy } from "@/lib/public-copy";
 import { cn } from "@/lib/utils";
+import { useNotificationStream } from "@/hooks/use-notification-stream";
 
 export function Header() {
   const { user, isAuthenticated } = useAuth();
@@ -20,6 +21,7 @@ export function Header() {
   const { t, language, isMounted } = useTranslation();
   const pathname = usePathname();
   const publicText = getPublicCopy(language);
+  const { unreadCount } = useNotificationStream(isAuthenticated);
 
   const publicLinks = [
     { href: "/keyboards", label: publicText.nav.explore, icon: Keyboard },
@@ -55,7 +57,7 @@ export function Header() {
 
       <nav className="order-3 flex w-full items-center justify-center gap-1 lg:order-none lg:w-auto" aria-label="Public navigation">
         {publicLinks.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`);
+          const active = pathname === href || (pathname.startsWith(`${href}/`) && !pathname.startsWith(`${href}/manage`));
           return (
             <Link
               key={href}
@@ -79,6 +81,10 @@ export function Header() {
         <ThemeToggle />
         {isAuthenticated ? (
           <div className="flex items-center gap-2.5">
+            <Link href="/notifications" className="relative">
+              <Button variant="ghost" size="icon" aria-label="Thông báo"><Bell className="h-4 w-4" /></Button>
+              {unreadCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-background bg-kawaii-pink px-1 text-[10px] font-black text-kawaii-mocha">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+            </Link>
             <Link href="/profile">
               <Button variant="outline" size="sm" className="gap-2 rounded-full border-kawaii-sky/60 bg-kawaii-cloud/50">
                 <UserIcon className="h-4 w-4 text-kawaii-mocha" />
