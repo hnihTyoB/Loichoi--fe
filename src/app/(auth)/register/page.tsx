@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
+import { BrandLogo } from "@/components/shared/brand-logo";
+import { DiscordAuthButton } from "@/components/shared/discord-auth-button";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,12 +41,14 @@ export default function RegisterPage() {
     }
   };
 
+  const handleDiscordRegister = () => {
+    window.location.href = authService.getDiscordOAuthUrl();
+  };
+
   return (
     <Card className="rounded-[2.5rem] border-2 border-kawaii-blush/80 bg-card/95 shadow-blush backdrop-blur-md">
       <CardHeader className="space-y-2 text-center pb-4">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-kawaii-blush/40 text-kawaii-mocha shadow-inner animate-bounce-subtle">
-          <UserPlus className="h-7 w-7 text-kawaii-mocha" />
-        </div>
+        <BrandLogo size="md" className="mx-auto h-14 w-14 animate-bounce-subtle" />
         <CardTitle className="text-2xl font-black text-kawaii-mocha">
           {isMounted ? t.auth.joinTitle : "Gia Nhập Loichoi"}
         </CardTitle>
@@ -52,7 +56,19 @@ export default function RegisterPage() {
           {isMounted ? t.auth.joinSubtitle : "Tạo tài khoản để cá nhân hóa bàn phím của bạn"}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <DiscordAuthButton onClick={handleDiscordRegister}>
+          {isMounted ? t.auth.registerDiscord : "Đăng ký với Discord"}
+        </DiscordAuthButton>
+
+        <div className="relative flex items-center justify-center text-xs uppercase">
+          <div className="w-full border-t border-kawaii-sky/40" />
+          <span className="bg-card px-3 font-bold text-kawaii-mocha/50">
+            {isMounted ? t.auth.orEmail : "hoặc email"}
+          </span>
+          <div className="w-full border-t border-kawaii-sky/40" />
+        </div>
+
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-kawaii-mocha ml-1">

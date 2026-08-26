@@ -5,6 +5,8 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import "./globals.css";
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
 const quicksand = Quicksand({
   subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700"],
@@ -18,14 +20,20 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
   title: {
-    template: "%s | Loichoi Kawaii",
-    default: "Loichoi - Nền tảng Tùy biến Bàn phím Cơ Dễ Thương",
+    template: "%s | Loichoi",
+    default: "Loichoi | Theme bàn phím điện thoại cho iOS và Android",
   },
-  description: "Website quản lý và tùy biến bàn phím cơ phong cách Cute Kawaii lấy cảm hứng từ Cinnamoroll.",
+  description: "Xem trước nhiều hình ảnh và tải bộ file theme bàn phím điện thoại cho iOS, Android.",
   icons: {
     icon: "/images/logos/logo_loichoi.png",
     apple: "/images/logos/logo_loichoi.png",
+  },
+  openGraph: {
+    siteName: "Loichoi",
+    type: "website",
+    locale: "vi_VN",
   },
 };
 

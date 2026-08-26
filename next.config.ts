@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
         hostname: "avatars.githubusercontent.com",
       },
       {
+        protocol: "https",
+        hostname: "**",
+      },
+      {
         protocol: "http",
         hostname: "localhost",
       },
@@ -23,6 +27,15 @@ const nextConfig: NextConfig = {
       {
         source: "/api/v1/:path*",
         destination: `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:9999"}/api/v1/:path*`,
+      },
+    ];
+  },
+  async redirects() {
+    return [
+      {
+        source: "/auth/callback",
+        destination: "/callback/discord",
+        permanent: false,
       },
     ];
   },

@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/shared/sidebar";
 import { BrandLogo } from "@/components/shared/brand-logo";
 import { useAuth } from "@/hooks/use-auth";
 import { useTranslation } from "@/hooks/use-translation";
+import { PublicFooter } from "@/components/public/public-footer";
 
 export default function DashboardLayout({
   children,
@@ -17,16 +18,17 @@ export default function DashboardLayout({
   const { t, isMounted } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
-  const isPublicKeyboardRoute =
-    pathname === "/keyboards" || pathname.startsWith("/keyboards/");
+  const isPublicRoute = ["/keyboards", "/categories", "/trending"].some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
 
   useEffect(() => {
-    if (!isPublicKeyboardRoute && !isLoading && !isAuthenticated) {
+    if (!isPublicRoute && !isLoading && !isAuthenticated) {
       router.replace("/login");
     }
-  }, [isAuthenticated, isLoading, isPublicKeyboardRoute, router]);
+  }, [isAuthenticated, isLoading, isPublicRoute, router]);
 
-  if (!isPublicKeyboardRoute && isLoading) {
+  if (!isPublicRoute && isLoading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-kawaii-cream gap-4">
         <div className="animate-bounce-subtle">
@@ -40,13 +42,14 @@ export default function DashboardLayout({
     );
   }
 
-  if (isPublicKeyboardRoute) {
+  if (isPublicRoute) {
     return (
       <div className="flex min-h-screen flex-col bg-kawaii-cream/60 text-kawaii-mocha">
         <Header />
         <main className="flex-1 p-4 md:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl space-y-6">{children}</div>
         </main>
+        <PublicFooter />
       </div>
     );
   }

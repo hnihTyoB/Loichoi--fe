@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useTranslation } from "@/hooks/use-translation";
 
-function DiscordCallbackContent() {
+function GenericCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refetch } = useAuth();
@@ -16,13 +16,13 @@ function DiscordCallbackContent() {
   useEffect(() => {
     const error = searchParams.get("error");
     if (error) {
-      toast.error(`Đăng nhập Discord thất bại: ${error}`);
+      toast.error(`Đăng nhập thất bại: ${error}`);
       router.replace("/login");
       return;
     }
 
     refetch().then(() => {
-      toast.success("Đăng nhập Discord thành công! Chào mừng bạn.");
+      toast.success("Đăng nhập thành công! Chào mừng bạn.");
       const storedReturnPath = sessionStorage.getItem("loichoi-auth-return-to");
       sessionStorage.removeItem("loichoi-auth-return-to");
       const safeReturnPath = storedReturnPath && storedReturnPath.startsWith("/") && !storedReturnPath.startsWith("//")
@@ -46,16 +46,16 @@ function DiscordCallbackContent() {
       </div>
       <div className="h-10 w-10 animate-spin rounded-full border-4 border-kawaii-babyblue border-t-transparent" />
       <h2 className="text-xl font-extrabold text-kawaii-mocha">
-        {isMounted ? t.auth.discordConnecting : "Đang bay vào máy chủ Discord..."}
+        {isMounted ? t.auth.discordConnecting : "Đang xử lý đăng nhập..."}
       </h2>
       <p className="text-sm text-kawaii-mocha/70">
-        {isMounted ? t.auth.discordConnectingDesc : "Vui lòng đợi một chút xíu, hệ thống đang đồng bộ tài khoản đáng yêu của bạn!"}
+        {isMounted ? t.auth.discordConnectingDesc : "Vui lòng đợi một chút, hệ thống đang đồng bộ tài khoản của bạn!"}
       </p>
     </div>
   );
 }
 
-export default function DiscordCallbackPage() {
+export default function GenericCallbackPage() {
   return (
     <Suspense
       fallback={
@@ -65,8 +65,7 @@ export default function DiscordCallbackPage() {
         </div>
       }
     >
-      <DiscordCallbackContent />
+      <GenericCallbackContent />
     </Suspense>
   );
 }
-

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { LogIn, LogOut, Menu, User as UserIcon, UserPlus } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Flame, Grid2X2, Keyboard, LogIn, LogOut, Menu, User as UserIcon, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "./brand-logo";
 import { ThemeToggle } from "./theme-toggle";
@@ -10,11 +11,21 @@ import { useAuth } from "@/hooks/use-auth";
 import { useUiStore } from "@/stores/ui-store";
 import { useTranslation } from "@/hooks/use-translation";
 import { authService } from "@/services/auth.service";
+import { getPublicCopy } from "@/lib/public-copy";
+import { cn } from "@/lib/utils";
 
 export function Header() {
   const { user, isAuthenticated } = useAuth();
   const { toggleSidebar } = useUiStore();
-  const { t, isMounted } = useTranslation();
+  const { t, language, isMounted } = useTranslation();
+  const pathname = usePathname();
+  const publicText = getPublicCopy(language);
+
+  const publicLinks = [
+    { href: "/keyboards", label: publicText.nav.explore, icon: Keyboard },
+    { href: "/categories", label: publicText.nav.categories, icon: Grid2X2 },
+    { href: "/trending", label: publicText.nav.trending, icon: Flame },
+  ];
 
   const handleLogout = async () => {
     try {
@@ -26,7 +37,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-20 w-full items-center justify-between border-b-2 border-kawaii-sky/30 bg-background/90 px-4 md:px-8 backdrop-blur-md">
+    <header className="sticky top-0 z-40 flex min-h-20 w-full flex-wrap items-center justify-between gap-y-2 border-b-2 border-kawaii-sky/30 bg-background/90 px-4 py-3 md:px-8 backdrop-blur-md">
       <div className="flex items-center gap-3">
         {isAuthenticated && (
           <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden rounded-full">
@@ -41,6 +52,27 @@ export function Header() {
           </span>
         </Link>
       </div>
+
+      <nav className="order-3 flex w-full items-center justify-center gap-1 lg:order-none lg:w-auto" aria-label="Public navigation">
+        {publicLinks.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || pathname.startsWith(`${href}/`);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-bold transition-colors sm:gap-2 sm:px-4 sm:text-sm",
+                active
+                  ? "bg-kawaii-sky/55 text-kawaii-mocha"
+                  : "text-kawaii-mocha/65 hover:bg-kawaii-cloud hover:text-kawaii-mocha",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
 
       <div className="flex items-center gap-2.5 sm:gap-3">
         <LanguageToggle />
