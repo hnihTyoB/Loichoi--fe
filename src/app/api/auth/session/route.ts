@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     const data = await res.json();
     return NextResponse.json({ authenticated: true, user: data.data });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ authenticated: false, error: "Failed to fetch session" }, { status: 500 });
   }
 }

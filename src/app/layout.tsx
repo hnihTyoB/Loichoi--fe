@@ -23,6 +23,10 @@ export const metadata: Metadata = {
     default: "Loichoi - Nền tảng Tùy biến Bàn phím Cơ Dễ Thương",
   },
   description: "Website quản lý và tùy biến bàn phím cơ phong cách Cute Kawaii lấy cảm hứng từ Cinnamoroll.",
+  icons: {
+    icon: "/images/logos/logo_loichoi.png",
+    apple: "/images/logos/logo_loichoi.png",
+  },
 };
 
 export default function RootLayout({

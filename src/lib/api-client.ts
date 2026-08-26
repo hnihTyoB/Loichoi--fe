@@ -20,13 +20,5 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
   (response) => response,
-  async (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized redirect or token refresh
-      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-        window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
-      }
-    }
-    return Promise.reject(error);
-  }
+  (error: AxiosError) => Promise.reject(error)
 );

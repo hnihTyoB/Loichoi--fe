@@ -1,16 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, Menu, Sparkles, User as UserIcon } from "lucide-react";
+import { LogIn, LogOut, Menu, User as UserIcon, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "./brand-logo";
 import { ThemeToggle } from "./theme-toggle";
+import { LanguageToggle } from "./language-toggle";
 import { useAuth } from "@/hooks/use-auth";
 import { useUiStore } from "@/stores/ui-store";
+import { useTranslation } from "@/hooks/use-translation";
 import { authService } from "@/services/auth.service";
 
 export function Header() {
   const { user, isAuthenticated } = useAuth();
   const { toggleSidebar } = useUiStore();
+  const { t, isMounted } = useTranslation();
 
   const handleLogout = async () => {
     try {
@@ -31,22 +35,21 @@ export function Header() {
           </Button>
         )}
         <Link href="/" className="group flex items-center gap-2.5 font-bold text-xl tracking-tight text-kawaii-mocha">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-kawaii-sky/40 border border-kawaii-sky text-lg shadow-sm transition-transform duration-200 group-hover:scale-110">
-            ☁️
-          </div>
+          <BrandLogo priority alt="" className="transition-transform duration-200 group-hover:scale-105" />
           <span className="font-extrabold bg-gradient-to-r from-kawaii-mocha to-kawaii-warmbrown bg-clip-text text-transparent">
-            Loichoi <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-kawaii-blush/60 text-kawaii-mocha border border-kawaii-blush">Kawaii 🌸</span>
+            Loichoi
           </span>
         </Link>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 sm:gap-3">
+        <LanguageToggle />
         <ThemeToggle />
         {isAuthenticated ? (
           <div className="flex items-center gap-2.5">
             <Link href="/profile">
               <Button variant="outline" size="sm" className="gap-2 rounded-full border-kawaii-sky/60 bg-kawaii-cloud/50">
-                <span className="text-xs">🐾</span>
+                <UserIcon className="h-4 w-4 text-kawaii-mocha" />
                 <span className="hidden sm:inline-block font-semibold text-kawaii-mocha">{user?.name || user?.email}</span>
               </Button>
             </Link>
@@ -54,22 +57,24 @@ export function Header() {
               variant="ghost"
               size="icon"
               onClick={handleLogout}
-              title="Đăng xuất"
+              title={isMounted ? t.nav.logout : "Đăng xuất"}
               className="rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
             >
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <Link href="/login">
-              <Button variant="ghost" size="sm" className="rounded-full font-bold">
-                Đăng nhập
+              <Button variant="ghost" size="sm" className="rounded-full font-bold gap-1.5">
+                <LogIn className="h-4 w-4" />
+                <span className="hidden sm:inline-block">{isMounted ? t.nav.login : "Đăng nhập"}</span>
               </Button>
             </Link>
             <Link href="/register">
-              <Button size="sm" className="rounded-full font-bold shadow-cloud">
-                Đăng ký ✨
+              <Button size="sm" className="rounded-full font-bold shadow-cloud gap-1.5">
+                <UserPlus className="h-4 w-4" />
+                <span>{isMounted ? t.nav.register : "Đăng ký"}</span>
               </Button>
             </Link>
           </div>

@@ -1,9 +1,15 @@
+"use client";
+
 import Link from "next/link";
-import { ArrowRight, Bot, Cpu, Heart, Keyboard, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Cloud, Heart, Keyboard, MessageSquare, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/shared/header";
+import { BrandLogo } from "@/components/shared/brand-logo";
+import { useTranslation } from "@/hooks/use-translation";
 
 export default function HomePage() {
+  const { t, isMounted } = useTranslation();
+
   return (
     <div className="flex min-h-screen flex-col bg-kawaii-cream text-kawaii-mocha">
       <Header />
@@ -11,40 +17,49 @@ export default function HomePage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative overflow-hidden py-20 md:py-28">
-          {/* Floating background clouds */}
-          <div className="absolute top-12 left-10 text-6xl opacity-30 animate-float">☁️</div>
-          <div className="absolute top-24 right-16 text-5xl opacity-40 animate-float-slow">✨</div>
-          <div className="absolute bottom-10 left-1/4 text-4xl opacity-30 animate-float">🌸</div>
-          <div className="absolute top-1/2 right-10 text-6xl opacity-20 animate-float-slow">☁️</div>
+          {/* Floating background clouds and sparkles */}
+          <div className="absolute top-12 left-10 opacity-30 animate-float pointer-events-none">
+            <Cloud className="h-16 w-16 text-kawaii-babyblue" />
+          </div>
+          <div className="absolute top-24 right-16 opacity-40 animate-float-slow pointer-events-none">
+            <Sparkles className="h-12 w-12 text-kawaii-warmbrown" />
+          </div>
+          <div className="absolute bottom-10 left-1/4 opacity-30 animate-float pointer-events-none">
+            <Heart className="h-10 w-10 fill-kawaii-pink text-kawaii-pink" />
+          </div>
+          <div className="absolute top-1/2 right-10 opacity-20 animate-float-slow pointer-events-none">
+            <Cloud className="h-20 w-20 text-kawaii-babyblue" />
+          </div>
 
           <div className="container relative z-10 mx-auto px-4 text-center">
             {/* Cute Pill Badge */}
             <div className="mx-auto inline-flex items-center gap-2 rounded-full border-2 border-kawaii-sky/80 bg-kawaii-cloud px-5 py-2 text-sm font-bold text-kawaii-mocha shadow-cloud bouncy-hover">
-              <span className="text-lg">☁️</span>
-              <span>Cinnamoroll Edition • Bồng Bềnh & Đáng Yêu</span>
+              <Cloud className="h-4 w-4 text-kawaii-mocha" />
+              <span>{isMounted ? t.home.badge : "Cinnamoroll Edition • Bồng Bềnh & Đáng Yêu"}</span>
               <Sparkles className="h-4 w-4 text-kawaii-warmbrown animate-spin" />
             </div>
 
             <h1 className="mt-8 text-4xl font-black tracking-tight sm:text-6xl md:text-7xl text-kawaii-mocha leading-tight">
-              Tùy Biến Bàn Phím Cơ <br className="hidden sm:inline" />
+              {isMounted ? t.home.heroTitle : "Tùy Biến Bàn Phím Cơ"} <br className="hidden sm:inline" />
               <span className="bg-gradient-to-r from-kawaii-warmbrown via-kawaii-mocha to-kawaii-babyblue bg-clip-text text-transparent">
-                Phong Cách Cute Kawaii 🐾
+                {isMounted ? t.home.heroTitleSub : "Phong Cách Cute Kawaii"}
               </span>
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-base md:text-lg text-kawaii-mocha/80 font-medium leading-relaxed">
-              Khám phá thế giới bàn phím cơ êm ái như những đám mây. Tích hợp Discord OAuth, phân quyền động (RBAC) và tùy biến layout switch theo sở thích của bạn!
+              {isMounted ? t.home.heroDescription : "Khám phá thế giới bàn phím cơ êm ái như những đám mây. Tích hợp Discord OAuth, phân quyền động (RBAC) và tùy biến layout switch theo sở thích của bạn!"}
             </p>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
               <Link href="/dashboard">
                 <Button size="lg" className="gap-2 font-bold shadow-cloud bouncy-hover">
-                  <span>Vào Bảng Điều Khiển</span> <ArrowRight className="h-5 w-5" />
+                  <span>{isMounted ? t.home.enterDashboard : "Vào Bảng Điều Khiển"}</span> <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
               <Link href="/login">
-                <Button variant="outline" size="lg" className="font-bold border-2 border-kawaii-sky bg-white/80 bouncy-hover">
-                  <span>Đăng Nhập Discord</span> <span className="text-base">💬</span>
+                <Button variant="outline" size="lg" className="gap-2 border-2 border-kawaii-sky bg-card/80 font-bold bouncy-hover">
+                  <MessageSquare className="h-4 w-4 text-[#5865F2]" />
+                  <span>{isMounted ? t.home.loginDiscord : "Đăng Nhập Discord"}</span>
                 </Button>
               </Link>
             </div>
@@ -56,47 +71,54 @@ export default function HomePage() {
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-2xl text-center">
               <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-kawaii-blush/60 text-xs font-bold text-kawaii-mocha border border-kawaii-blush">
-                🌸 Tính Năng Cốt Lõi
+                <Heart className="h-3.5 w-3.5 fill-kawaii-pink text-kawaii-pink" />
+                <span>{isMounted ? t.home.coreFeaturesBadge : "Tính Năng Cốt Lõi"}</span>
               </div>
               <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-kawaii-mocha">
-                Mềm Mại Như Đám Mây, Chuẩn Mực Hiện Đại
+                {isMounted ? t.home.coreFeaturesTitle : "Mềm Mại Như Đám Mây, Chuẩn Mực Hiện Đại"}
               </h2>
               <p className="mt-2 text-sm md:text-base text-kawaii-mocha/70">
-                Kết hợp trọn vẹn giữa giao diện dễ thương và kiến trúc Next.js App Router mạnh mẽ.
+                {isMounted ? t.home.coreFeaturesDesc : "Kết hợp trọn vẹn giữa giao diện dễ thương và kiến trúc Next.js App Router mạnh mẽ."}
               </p>
             </div>
 
             <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
               {/* Feature Card 1 */}
               <div className="rounded-[2.25rem] border-2 border-kawaii-sky/60 bg-card p-8 shadow-cloud transition-all duration-300 bouncy-hover hover:border-kawaii-babyblue">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-kawaii-sky/40 text-2xl shadow-inner">
-                  ⌨️
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-kawaii-sky/40 text-kawaii-mocha shadow-inner">
+                  <Keyboard className="h-7 w-7 text-kawaii-mocha" />
                 </div>
-                <h3 className="mt-5 text-xl font-extrabold text-kawaii-mocha">Quản Lý Keyboards</h3>
+                <h3 className="mt-5 text-xl font-extrabold text-kawaii-mocha">
+                  {isMounted ? t.home.feature1Title : "Quản Lý Keyboards"}
+                </h3>
                 <p className="mt-2.5 text-sm text-kawaii-mocha/70 leading-relaxed">
-                  Cấu hình chi tiết vỏ case, plate gasket mount, switch hotswap và map phím VIA/QMK nhanh chóng.
+                  {isMounted ? t.home.feature1Desc : "Cấu hình chi tiết vỏ case, plate gasket mount, switch hotswap và map phím VIA/QMK nhanh chóng."}
                 </p>
               </div>
 
               {/* Feature Card 2 */}
               <div className="rounded-[2.25rem] border-2 border-kawaii-blush/80 bg-card p-8 shadow-blush transition-all duration-300 bouncy-hover hover:border-kawaii-pink">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-kawaii-blush/60 text-2xl shadow-inner">
-                  🛡️
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-kawaii-blush/60 text-kawaii-mocha shadow-inner">
+                  <ShieldCheck className="h-7 w-7 text-kawaii-mocha" />
                 </div>
-                <h3 className="mt-5 text-xl font-extrabold text-kawaii-mocha">Phân Quyền Động (RBAC)</h3>
+                <h3 className="mt-5 text-xl font-extrabold text-kawaii-mocha">
+                  {isMounted ? t.home.feature2Title : "Phân Quyền Động (RBAC)"}
+                </h3>
                 <p className="mt-2.5 text-sm text-kawaii-mocha/70 leading-relaxed">
-                  Kiểm soát ma trận phân quyền chi tiết, bảo vệ trang và nút hành động với PermissionGate linh hoạt.
+                  {isMounted ? t.home.feature2Desc : "Kiểm soát ma trận phân quyền chi tiết, bảo vệ trang và nút hành động với PermissionGate linh hoạt."}
                 </p>
               </div>
 
               {/* Feature Card 3 */}
               <div className="rounded-[2.25rem] border-2 border-kawaii-sky/60 bg-card p-8 shadow-cloud transition-all duration-300 bouncy-hover hover:border-kawaii-babyblue">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-kawaii-sky/40 text-2xl shadow-inner">
-                  🐾
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-kawaii-sky/40 text-kawaii-mocha shadow-inner">
+                  <MessageSquare className="h-7 w-7 text-kawaii-mocha" />
                 </div>
-                <h3 className="mt-5 text-xl font-extrabold text-kawaii-mocha">Discord OAuth Gateway</h3>
+                <h3 className="mt-5 text-xl font-extrabold text-kawaii-mocha">
+                  {isMounted ? t.home.feature3Title : "Discord OAuth Gateway"}
+                </h3>
                 <p className="mt-2.5 text-sm text-kawaii-mocha/70 leading-relaxed">
-                  Xác thực một chạm với Discord, tự động cấp quyền thành viên theo vai trò trên máy chủ.
+                  {isMounted ? t.home.feature3Desc : "Xác thực một chạm với Discord, tự động cấp quyền thành viên theo vai trò trên máy chủ."}
                 </p>
               </div>
             </div>
@@ -108,12 +130,12 @@ export default function HomePage() {
       <footer className="relative border-t-2 border-kawaii-sky/30 bg-card py-10 text-center text-sm text-kawaii-mocha/70">
         <div className="container mx-auto px-4 space-y-2">
           <div className="flex justify-center items-center gap-2 text-base">
-            <span>☁️</span>
+            <BrandLogo alt="" />
             <span className="font-bold text-kawaii-mocha">Loichoi Kawaii Edition</span>
-            <span>🌸</span>
+            <Heart className="h-3.5 w-3.5 fill-kawaii-pink text-kawaii-pink" />
           </div>
           <p className="text-xs text-kawaii-mocha/60">
-            © 2026 Loichoi Ecosystem. Thiết kế lấy cảm hứng từ Cinnamoroll & Sanrio.
+            © 2026 Loichoi Ecosystem. {isMounted ? t.home.footerNote : "Thiết kế lấy cảm hứng từ Cinnamoroll & Sanrio."}
           </p>
         </div>
       </footer>

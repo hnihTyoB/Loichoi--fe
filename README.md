@@ -4,12 +4,14 @@
 
 ---
 
-## 🛠️ Tech Stack
+## 1. Tech Stack
 
 - **Framework**: [Next.js 15+](https://nextjs.org/) (App Router) + TypeScript
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components**: [shadcn/ui](https://ui.shadcn.com/) + [Radix UI Primitives](https://www.radix-ui.com/)
-- **Icons**: [Lucide React](https://lucide.dev/)
+- **Icons**: [Lucide React](https://lucide.dev/) (Chuẩn Icon hệ thống - Không dùng emoji)
+- **Internationalization**: Song ngữ Anh - Việt qua Zustand & i18n Dictionary
+- **Theme**: Sáng / Tối / Theo hệ thống qua next-themes & ThemeToggle
 - **Data Fetching & Cache**: [TanStack Query v5](https://tanstack.com/query/latest)
 - **Form & Validation**: [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
 - **Global State**: [Zustand](https://zustand-demo.pmnd.rs/)
@@ -20,7 +22,7 @@
 
 ---
 
-## 📁 Cấu Trúc Dự Án (Project Structure)
+## 2. Cấu Trúc Dự Án (Project Structure)
 
 ```text
 loichoi-fe/
@@ -42,19 +44,19 @@ loichoi-fe/
     │   ├── error.tsx         # Client Error Boundary
     │   └── not-found.tsx     # 404 Not Found UI
     ├── components/
-    │   ├── ui/               # shadcn/ui base primitives (button, card, dialog, input...)
-    │   ├── shared/           # Header, Sidebar, ThemeToggle, PermissionGate...
+    │   ├── ui/               # shadcn/ui base primitives (button, card, dialog, dropdown-menu...)
+    │   ├── shared/           # Header, Sidebar, ThemeToggle, LanguageToggle, PermissionGate...
     │   └── providers/        # QueryProvider, ThemeProvider...
-    ├── hooks/                # Custom React hooks (useAuth, usePermissions...)
-    ├── lib/                  # Tiện ích chung (utils.ts, api-client.ts, constants.ts...)
+    ├── hooks/                # Custom React hooks (useAuth, usePermissions, useTranslation...)
+    ├── lib/                  # Tiện ích chung (utils.ts, api-client.ts, constants.ts, i18n...)
     ├── services/             # API services kết nối Backend (/api/v1)
-    ├── stores/               # Zustand global state (auth-store.ts, ui-store.ts)
+    ├── stores/               # Zustand global state (auth-store.ts, ui-store.ts, language-store.ts)
     └── types/                # TypeScript type definitions
 ```
 
 ---
 
-## 🚀 Khởi Chạy Dự Án
+## 3. Khởi Chạy Dự Án
 
 ### 1. Cài đặt dependencies
 

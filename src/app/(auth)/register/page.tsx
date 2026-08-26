@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,22 +15,25 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { authService } from "@/services/auth.service";
+import { useTranslation } from "@/hooks/use-translation";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { t, isMounted } = useTranslation();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       await authService.register({ name, email, password });
-      toast.success("Đăng ký thành công! Hãy đăng nhập để bắt đầu 🌸");
+      toast.success("Đăng ký thành công! Hãy đăng nhập để bắt đầu.");
       window.location.href = "/login";
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!");
+    } catch (err: unknown) {
+      const errorMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại!";
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -38,20 +42,24 @@ export default function RegisterPage() {
   return (
     <Card className="rounded-[2.5rem] border-2 border-kawaii-blush/80 bg-card/95 shadow-blush backdrop-blur-md">
       <CardHeader className="space-y-2 text-center pb-4">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-kawaii-blush/40 text-3xl shadow-inner animate-bounce-subtle">
-          🌸
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-kawaii-blush/40 text-kawaii-mocha shadow-inner animate-bounce-subtle">
+          <UserPlus className="h-7 w-7 text-kawaii-mocha" />
         </div>
-        <CardTitle className="text-2xl font-black text-kawaii-mocha">Gia Nhập Loichoi</CardTitle>
+        <CardTitle className="text-2xl font-black text-kawaii-mocha">
+          {isMounted ? t.auth.joinTitle : "Gia Nhập Loichoi"}
+        </CardTitle>
         <CardDescription className="text-sm text-kawaii-mocha/70">
-          Tạo tài khoản để cá nhân hóa bàn phím của bạn ☁️
+          {isMounted ? t.auth.joinSubtitle : "Tạo tài khoản để cá nhân hóa bàn phím của bạn"}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-kawaii-mocha ml-1">Họ và tên của bạn</label>
+            <label className="text-xs font-bold text-kawaii-mocha ml-1">
+              {isMounted ? t.auth.fullName : "Họ và tên của bạn"}
+            </label>
             <Input
-              placeholder="Cinnamoroll Cún Con"
+              placeholder="Cinnamoroll Fan"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -59,7 +67,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-kawaii-mocha ml-1">Địa chỉ Email</label>
+            <label className="text-xs font-bold text-kawaii-mocha ml-1">
+              {isMounted ? t.auth.emailAddress : "Địa chỉ Email"}
+            </label>
             <Input
               type="email"
               placeholder="user@loichoi.vn"
@@ -70,7 +80,9 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-kawaii-mocha ml-1">Mật khẩu bảo mật</label>
+            <label className="text-xs font-bold text-kawaii-mocha ml-1">
+              {isMounted ? t.auth.password : "Mật khẩu bảo mật"}
+            </label>
             <Input
               type="password"
               placeholder="••••••••"
@@ -80,15 +92,20 @@ export default function RegisterPage() {
             />
           </div>
 
-          <Button type="submit" variant="kawaiiPink" className="w-full h-12 text-base font-bold shadow-blush mt-2" disabled={isLoading}>
-            {isLoading ? "Đang tạo tài khoản 🐾..." : "Tạo Tài Khoản Mới ✨"}
+          <Button type="submit" variant="kawaiiPink" className="w-full h-12 gap-2 text-base font-bold shadow-blush mt-2" disabled={isLoading}>
+            <UserPlus className="h-4 w-4" />
+            <span>
+              {isLoading
+                ? (isMounted ? t.auth.registering : "Đang tạo tài khoản...")
+                : (isMounted ? t.auth.registerButton : "Tạo Tài Khoản Mới")}
+            </span>
           </Button>
         </form>
       </CardContent>
       <CardFooter className="justify-center text-sm text-kawaii-mocha/70 pt-0">
-        Đã có tài khoản?{" "}
+        {isMounted ? t.auth.alreadyHaveAccount : "Đã có tài khoản?"}{" "}
         <Link href="/login" className="ml-1.5 text-kawaii-warmbrown hover:underline font-bold">
-          Đăng nhập ngay ☁️
+          {isMounted ? t.auth.loginNow : "Đăng nhập ngay"}
         </Link>
       </CardFooter>
     </Card>

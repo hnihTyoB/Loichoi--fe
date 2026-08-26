@@ -8,15 +8,15 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-kawaii-sky bg-kawaii-babyblue/30 text-kawaii-mocha hover:bg-kawaii-sky/50",
+          "border-primary/60 bg-primary/20 text-foreground hover:bg-primary/30",
         secondary:
-          "border-kawaii-blush bg-kawaii-blush/40 text-kawaii-mocha hover:bg-kawaii-blush",
+          "border-secondary/70 bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive:
           "border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20",
         outline:
-          "border-2 border-kawaii-sky/70 bg-background text-kawaii-mocha",
+          "border-2 border-border bg-background text-foreground",
         kawaiiCloud:
-          "border-kawaii-sky/40 bg-kawaii-cloud text-kawaii-mocha shadow-cloud",
+          "border-border bg-muted text-foreground shadow-cloud",
       },
     },
     defaultVariants: {

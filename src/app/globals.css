@@ -5,6 +5,16 @@
 @layer base {
   :root {
     /* Cinnamoroll Light Palette: Cream White Base + Baby Blue CTA + Mocha Brown Text + Blush Pink */
+    --kawaii-cream: 0 0% 99%;
+    --kawaii-milk: 0 0% 98%;
+    --kawaii-sky: 212 94% 90%;
+    --kawaii-babyblue: 213 96% 82%;
+    --kawaii-blush: 346 100% 91%;
+    --kawaii-pink: 349 100% 86%;
+    --kawaii-mocha: 25 34% 33%;
+    --kawaii-warmbrown: 29 52% 36%;
+    --kawaii-cloud: 214 76% 96%;
+
     --background: 210 20% 99%;         /* #FDFDFE Kem sữa */
     --foreground: 25 35% 33%;          /* #6F4E37 Nâu mocha ấm */
     
@@ -37,6 +47,16 @@
 
   .dark {
     /* Cinnamoroll Dark Mode: Deep Midnight Pastel */
+    --kawaii-cream: 224 40% 12%;
+    --kawaii-milk: 224 35% 15%;
+    --kawaii-sky: 214 40% 38%;
+    --kawaii-babyblue: 213 48% 42%;
+    --kawaii-blush: 346 34% 30%;
+    --kawaii-pink: 348 42% 36%;
+    --kawaii-mocha: 30 40% 92%;
+    --kawaii-warmbrown: 28 55% 72%;
+    --kawaii-cloud: 222 30% 20%;
+
     --background: 224 40% 12%;
     --foreground: 210 40% 95%;
     

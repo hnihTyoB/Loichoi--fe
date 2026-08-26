@@ -9,19 +9,19 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-kawaii-babyblue text-kawaii-mocha shadow-cloud hover:bg-kawaii-sky hover:shadow-cloud-hover border border-kawaii-sky/60",
+          "border border-primary/70 bg-primary text-primary-foreground shadow-cloud hover:bg-primary/85 hover:shadow-cloud-hover",
         kawaiiPink:
-          "bg-kawaii-pink text-kawaii-mocha shadow-blush hover:bg-kawaii-blush border border-kawaii-blush",
+          "border border-accent/70 bg-accent text-accent-foreground shadow-blush hover:bg-accent/85",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
-          "border-2 border-kawaii-sky/80 bg-background text-kawaii-mocha hover:bg-kawaii-cloud hover:text-kawaii-mocha hover:border-kawaii-babyblue",
+          "border-2 border-border bg-background text-foreground hover:border-primary hover:bg-muted hover:text-foreground",
         secondary:
-          "bg-kawaii-blush text-kawaii-mocha hover:bg-kawaii-pink/80 border border-kawaii-blush/80",
+          "border border-secondary/80 bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:
-          "text-kawaii-mocha hover:bg-kawaii-cloud hover:text-kawaii-mocha",
+          "text-foreground hover:bg-muted hover:text-foreground",
         link:
-          "text-kawaii-warmbrown underline-offset-4 hover:underline hover:text-kawaii-mocha shadow-none hover:scale-100",
+          "text-kawaii-warmbrown underline-offset-4 hover:text-foreground hover:underline shadow-none hover:scale-100",
       },
       size: {
         default: "h-11 px-6 py-2.5",
