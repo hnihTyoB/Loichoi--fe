@@ -110,3 +110,13 @@
   box-shadow: 0 10px 30px -5px rgba(162, 207, 254, 0.35);
   border: 1.5px solid rgba(205, 228, 254, 0.6);
 }
+
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

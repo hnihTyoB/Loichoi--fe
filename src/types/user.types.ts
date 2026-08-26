@@ -15,6 +15,7 @@ export interface User {
   permissions: string[];
   isActive: boolean;
   isEmailVerified: boolean;
+  phoneNumber?: string | null;
   discordId?: string | null;
   createdAt: string;
   updatedAt: string;

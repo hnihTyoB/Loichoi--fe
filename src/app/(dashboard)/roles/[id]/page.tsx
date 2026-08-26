@@ -129,10 +129,10 @@ export default function RoleDetailPage({ params }: { params: Promise<{ id: strin
                       className="flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-kawaii-sky/30 bg-kawaii-cloud/20 p-3 transition hover:border-kawaii-sky"
                     >
                       <input
-                        className="mt-1"
+                        className="mt-1 h-4 w-4 rounded border-kawaii-sky/60 text-kawaii-warmbrown focus:ring-kawaii-sky accent-kawaii-warmbrown cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                         type="checkbox"
                         checked={selected.includes(permission.id)}
-                        disabled={role.data.isSystem}
+                        disabled={role.data.name === "ADMIN" && permission.name === "ROLE_PERMISSION_ASSIGN"}
                         onChange={(event) =>
                           setSelected(
                             event.target.checked
@@ -141,7 +141,7 @@ export default function RoleDetailPage({ params }: { params: Promise<{ id: strin
                           )
                         }
                       />
-                      <span>
+                      <span className="select-none">
                         <span className="block font-mono text-xs font-bold text-kawaii-mocha">{permission.name}</span>
                         <span className="text-xs text-kawaii-mocha/55">{permission.description || permission.action}</span>
                       </span>

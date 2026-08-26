@@ -63,10 +63,11 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-30 flex h-full w-72 flex-col border-r-2 border-kawaii-sky/30 bg-card/90 backdrop-blur-md transition-transform duration-300 md:static md:translate-x-0",
+        "fixed inset-y-0 left-0 z-30 flex h-screen w-72 flex-col border-r-2 border-kawaii-sky/30 bg-card/90 backdrop-blur-md transition-transform duration-300 md:sticky md:top-0 md:translate-x-0",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full",
       )}
     >
+
       <div className="flex h-20 items-center gap-3 border-b-2 border-kawaii-sky/30 px-6">
         <BrandLogo priority alt="" />
         <div>
@@ -80,9 +81,10 @@ export function Sidebar() {
       </div>
 
       <nav
-        className="flex-1 space-y-1.5 overflow-y-auto p-4"
+        className="no-scrollbar flex-1 space-y-1.5 overflow-y-auto p-4"
         aria-label={isMounted ? t.nav.menuTitle : "Danh mục menu"}
       >
+
         <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-kawaii-mocha/50">
           {isMounted ? t.nav.menuTitle : "Danh mục menu"}
         </div>

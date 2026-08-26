@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, selectClassName } from "@/components/shared/admin-ui";
+import { ThemeImageUploader } from "@/components/forms/theme-image-uploader";
 import { useTranslation } from "@/hooks/use-translation";
 import type { AdminCategory, AdminKeyboard, KeyboardPayload } from "@/types/admin.types";
 
@@ -15,7 +16,7 @@ const schema = z.object({
   name: z.string().min(3, "Tên cần ít nhất 3 ký tự").max(150),
   slug: z.string().regex(/^$|^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug chỉ gồm chữ thường, số và dấu gạch ngang"),
   description: z.string().max(2000),
-  coverUrl: z.string().url("URL ảnh bìa không hợp lệ"),
+  coverUrl: z.string().url("Vui lòng tải lên hoặc chọn ảnh bìa hợp lệ"),
   driveUrl: z.string().url("URL tải xuống không hợp lệ").refine((value) => /^(https?:\/\/)?(drive|docs)\.google\.com\//.test(value), "Cần dùng URL Google Drive"),
   platform: z.enum(["IOS", "ANDROID", "BOTH"]),
   status: z.enum(["DRAFT", "PUBLISHED", "HIDDEN"]),
@@ -25,12 +26,16 @@ const schema = z.object({
   isFeatured: z.boolean(),
   previewUrls: z.string(),
 }).superRefine((value, context) => {
-  if (value.status === "PUBLISHED" && value.categoryIds.length === 0) context.addIssue({ code: "custom", path: ["categoryIds"], message: "Theme đã xuất bản cần ít nhất một danh mục" });
-  if (value.accessLevel === "DISCORD_ROLE" && !value.requiredDiscordRoles.trim()) context.addIssue({ code: "custom", path: ["requiredDiscordRoles"], message: "Cần ít nhất một Discord Role ID" });
+  if (value.status === "PUBLISHED" && value.categoryIds.length === 0) {
+    context.addIssue({ code: "custom", path: ["categoryIds"], message: "Theme đã xuất bản cần ít nhất một danh mục" });
+  }
   for (const url of value.previewUrls.split("\n").map((item) => item.trim()).filter(Boolean)) {
-    if (!z.string().url().safeParse(url).success) context.addIssue({ code: "custom", path: ["previewUrls"], message: "Có URL ảnh xem trước không hợp lệ" });
+    if (!z.string().url().safeParse(url).success) {
+      context.addIssue({ code: "custom", path: ["previewUrls"], message: "Có URL ảnh xem trước không hợp lệ" });
+    }
   }
 });
+
 
 type Values = z.infer<typeof schema>;
 const defaults: Values = { name: "", slug: "", description: "", coverUrl: "", driveUrl: "", platform: "BOTH", status: "DRAFT", accessLevel: "FREE", requiredDiscordRoles: "", categoryIds: [], isFeatured: false, previewUrls: "" };
@@ -51,8 +56,14 @@ export function KeyboardFormDialog({
   onSubmit: (payload: KeyboardPayload) => Promise<void>;
 }) {
   const { t, isMounted } = useTranslation();
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: defaults });
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: defaults,
+  });
+
   const selected = watch("categoryIds");
+  const currentCoverUrl = watch("coverUrl");
+  const currentPreviewUrls = watch("previewUrls");
 
   const handleOpen = (next: boolean) => {
     if (next) reset(keyboard ? {
@@ -64,9 +75,13 @@ export function KeyboardFormDialog({
     onOpenChange(next);
   };
 
+  const parsedPreviewUrls = currentPreviewUrls
+    ? currentPreviewUrls.split("\n").map((u) => u.trim()).filter(Boolean)
+    : [];
+
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-kawaii-mocha">
             {keyboard
@@ -91,11 +106,38 @@ export function KeyboardFormDialog({
               requiredDiscordRoleIds: values.requiredDiscordRoles.split("\n").map((item) => item.trim()).filter(Boolean),
               categoryIds: values.categoryIds,
               isFeatured: values.isFeatured,
-              previewImages: values.previewUrls.split("\n").map((url) => url.trim()).filter(Boolean).map((url, position) => ({ url, position })),
+              previewImages: values.previewUrls
+                .split("\n")
+                .map((url) => url.trim())
+                .filter(Boolean)
+                .map((url, position) => ({ url, position })),
             });
           })}
           className="space-y-4"
         >
+          {/* Uploader hình ảnh Theme trực tiếp lên R2 */}
+          <div className="rounded-3xl border-2 border-kawaii-sky/35 bg-kawaii-cloud/15 p-4">
+            <ThemeImageUploader
+              coverUrl={currentCoverUrl}
+              previewUrls={parsedPreviewUrls}
+              onChange={({ coverUrl: nextCover, previewUrls: nextPreviews }) => {
+                setValue("coverUrl", nextCover, { shouldValidate: true });
+                setValue("previewUrls", nextPreviews.join("\n"), { shouldValidate: true });
+              }}
+              disabled={busy}
+            />
+            {errors.coverUrl?.message && (
+              <p className="mt-2 text-xs font-bold text-destructive">
+                {errors.coverUrl.message}
+              </p>
+            )}
+            {errors.previewUrls?.message && (
+              <p className="mt-1 text-xs font-bold text-destructive">
+                {errors.previewUrls.message}
+              </p>
+            )}
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={isMounted ? t.adminKeyboards.formName : "Tên theme"} error={errors.name?.message}>
               <Input {...register("name")} />
@@ -107,14 +149,9 @@ export function KeyboardFormDialog({
           <Field label={isMounted ? t.adminKeyboards.formDescription : "Mô tả"} error={errors.description?.message}>
             <Textarea {...register("description")} />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={isMounted ? t.adminKeyboards.formCoverUrl : "URL ảnh bìa"} error={errors.coverUrl?.message}>
-              <Input {...register("coverUrl")} />
-            </Field>
-            <Field label={isMounted ? t.adminKeyboards.formDriveUrl : "URL Google Drive"} error={errors.driveUrl?.message}>
-              <Input {...register("driveUrl")} />
-            </Field>
-          </div>
+          <Field label={isMounted ? t.adminKeyboards.formDriveUrl : "URL Google Drive"} error={errors.driveUrl?.message}>
+            <Input {...register("driveUrl")} placeholder="https://drive.google.com/..." />
+          </Field>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label={isMounted ? t.adminKeyboards.formPlatform : "Nền tảng"}>
               <select className={selectClassName} {...register("platform")}>
@@ -159,14 +196,10 @@ export function KeyboardFormDialog({
               ))}
             </div>
           </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label={isMounted ? t.adminKeyboards.formDiscordRoles : "Discord Role ID, mỗi dòng một ID"} error={errors.requiredDiscordRoles?.message}>
-              <Textarea {...register("requiredDiscordRoles")} />
-            </Field>
-            <Field label={isMounted ? t.adminKeyboards.formPreviewUrls : "URL ảnh xem trước, mỗi dòng một URL"} error={errors.previewUrls?.message}>
-              <Textarea {...register("previewUrls")} />
-            </Field>
-          </div>
+          <Field label={isMounted ? t.adminKeyboards.formDiscordRoles : "Discord Role ID, mỗi dòng một ID"} error={errors.requiredDiscordRoles?.message}>
+            <Textarea {...register("requiredDiscordRoles")} placeholder="Để trống để tự động áp dụng danh sách Role từ Cài đặt hệ thống" />
+          </Field>
+
           <label className="flex items-center gap-2 rounded-2xl bg-kawaii-blush/25 p-3 text-sm font-bold text-kawaii-mocha">
             <input type="checkbox" {...register("isFeatured")} />
             {isMounted ? t.adminKeyboards.formFeatured : "Đánh dấu nổi bật"}
@@ -186,4 +219,5 @@ export function KeyboardFormDialog({
     </Dialog>
   );
 }
+
 

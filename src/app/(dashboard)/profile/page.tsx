@@ -60,8 +60,16 @@ export default function ProfilePage() {
     if (user) {
       setFullName(user.fullName || user.name || "");
       setAvatarUrl(user.avatarUrl || "");
+      setPhoneNumber(user.phoneNumber || "");
     }
   }, [user]);
+
+  // Check if profile form fields have changed compared to original user values
+  const initialFullName = user?.fullName || user?.name || "";
+  const initialPhoneNumber = user?.phoneNumber || "";
+  const isProfileChanged =
+    fullName.trim() !== initialFullName.trim() ||
+    phoneNumber.trim() !== initialPhoneNumber.trim();
 
   // Query Active Sessions
   const sessionsQuery = useQuery({
@@ -185,6 +193,7 @@ export default function ProfilePage() {
 
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isProfileChanged) return;
     updateProfileMutation.mutate();
   };
 
@@ -480,8 +489,8 @@ export default function ProfilePage() {
                     <div className="pt-2 flex justify-end">
                       <Button
                         type="submit"
-                        disabled={updateProfileMutation.isPending}
-                        className="rounded-2xl px-6 font-bold text-xs shadow-md"
+                        disabled={updateProfileMutation.isPending || !isProfileChanged}
+                        className="rounded-2xl px-6 font-bold text-xs shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {updateProfileMutation.isPending
                           ? (isMounted ? t.profile.savingProfile : "Đang lưu...")

@@ -68,4 +68,87 @@ export const keyboardService = {
     );
     return response.data.data;
   },
+
+  async getUploadUrl(
+    contentType: string,
+    imageType: "COVER" | "PREVIEW" = "COVER",
+  ): Promise<{ uploadUrl: string; publicUrl: string; key: string; expiresIn: number }> {
+    const response = await apiClient.post<
+      ApiResponse<{ uploadUrl: string; publicUrl: string; key: string; expiresIn: number }>
+    >("/keyboards/upload-url", {
+      contentType,
+      imageType,
+    });
+    return response.data.data;
+  },
+
+  async getBatchUploadUrls(
+    files: Array<{ contentType: string; imageType?: "COVER" | "PREVIEW" }>,
+  ): Promise<Array<{ uploadUrl: string; publicUrl: string; key: string; expiresIn: number }>> {
+    const response = await apiClient.post<
+      ApiResponse<{ items: Array<{ uploadUrl: string; publicUrl: string; key: string; expiresIn: number }> }>
+    >("/keyboards/batch-upload-urls", {
+      files,
+    });
+    return response.data.data.items;
+  },
+
+  async uploadImageToR2(
+    file: File,
+    imageType: "COVER" | "PREVIEW" = "COVER",
+  ): Promise<{ publicUrl: string; key: string }> {
+    const { uploadUrl, publicUrl, key } = await this.getUploadUrl(file.type || "image/webp", imageType);
+
+    const uploadRes = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": file.type || "image/webp",
+      },
+      body: file,
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error("Không thể tải ảnh lên bộ nhớ đám mây R2");
+    }
+
+    return { publicUrl, key };
+  },
+
+  async uploadMultipleImagesToR2(
+    files: File[],
+    onProgress?: (index: number, total: number, file: File, publicUrl: string) => void,
+  ): Promise<string[]> {
+    if (files.length === 0) return [];
+
+    const presignedItems = await this.getBatchUploadUrls(
+      files.map((file, idx) => ({
+        contentType: file.type || "image/webp",
+        imageType: idx === 0 ? "COVER" : "PREVIEW",
+      })),
+    );
+
+    const results = await Promise.all(
+      files.map(async (file, idx) => {
+        const item = presignedItems[idx];
+        const res = await fetch(item.uploadUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": file.type || "image/webp",
+          },
+          body: file,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Không thể tải ảnh ${file.name} lên R2`);
+        }
+
+        onProgress?.(idx, files.length, file, item.publicUrl);
+        return item.publicUrl;
+      }),
+    );
+
+    return results;
+  },
 };
+
+
