@@ -22,14 +22,14 @@ export default function SettingsPage() {
       icon: Server,
     },
     {
-      title: isMounted && t.common.active ? "Maintenance" : "Chế độ bảo trì",
-      description: "Bật chế độ chặn toàn bộ hoặc chỉ đọc và cấu hình danh sách được phép bỏ qua.",
+      title: isMounted ? t.settings.maintenanceTitle : "Chế Độ Bảo Trì",
+      description: isMounted ? t.settings.maintenanceDesc : "Bật chế độ chặn toàn bộ hoặc chỉ đọc và cấu hình danh sách được phép bỏ qua.",
       href: "/settings/maintenance",
       icon: Construction,
     },
     {
-      title: "Scheduled Jobs",
-      description: "Theo dõi lịch và kích hoạt thủ công các tác vụ nền.",
+      title: isMounted ? t.settings.cronTitle : "Tác Vụ Định Kỳ",
+      description: isMounted ? t.settings.cronDesc : "Theo dõi lịch và kích hoạt thủ công các tác vụ nền.",
       href: "/settings/cron",
       icon: CalendarClock,
     },
@@ -58,7 +58,7 @@ export default function SettingsPage() {
                       <Icon className="h-7 w-7" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{item.title}</CardTitle>
+                      <CardTitle className="text-lg text-kawaii-mocha">{item.title}</CardTitle>
                       <CardDescription className="text-xs text-kawaii-mocha/70 mt-1">{item.description}</CardDescription>
                     </div>
                   </div>
@@ -71,3 +71,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

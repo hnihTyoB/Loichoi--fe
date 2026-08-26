@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { Language } from "@/lib/i18n";
+import type { Language } from "@/lib/i18n";
 
 interface LanguageState {
   language: Language;

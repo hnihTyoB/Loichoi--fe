@@ -17,44 +17,520 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { usePermissions } from "@/hooks/use-permissions";
+import { useTranslation } from "@/hooks/use-translation";
 import { PERMISSIONS } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
 import { formatDate } from "@/lib/utils";
 import { notificationService } from "@/services/notification.service";
 import type { NotificationTemplate } from "@/types/admin.types";
 
-const broadcastSchema = z.object({ title: z.string().min(3).max(200), content: z.string().min(3).max(2000), type: z.string(), priority: z.string(), actionUrl: z.string().refine((value) => !value || z.string().url().safeParse(value).success, "URL không hợp lệ") });
-const templateSchema = z.object({ code: z.string().min(2).max(100).regex(/^[A-Z0-9_]+$/, "Dùng chữ hoa, số và gạch dưới"), name: z.string().min(2).max(150), description: z.string(), channels: z.string().min(1), subject: z.string(), title: z.string(), content: z.string().min(1), variables: z.string(), isActive: z.boolean() });
-type BroadcastValues = z.infer<typeof broadcastSchema>; type TemplateValues = z.infer<typeof templateSchema>;
-const list = (value: string) => value.split(/[,\n]/).map((item) => item.trim()).filter(Boolean);
+const broadcastSchema = z.object({
+  title: z.string().min(3).max(200),
+  content: z.string().min(3).max(2000),
+  type: z.string(),
+  priority: z.string(),
+  actionUrl: z.string().refine((value) => !value || z.string().url().safeParse(value).success, "URL không hợp lệ"),
+});
+const templateSchema = z.object({
+  code: z.string().min(2).max(100).regex(/^[A-Z0-9_]+$/, "Dùng chữ hoa, số và gạch dưới"),
+  name: z.string().min(2).max(150),
+  description: z.string(),
+  channels: z.string().min(1),
+  subject: z.string(),
+  title: z.string(),
+  content: z.string().min(1),
+  variables: z.string(),
+  isActive: z.boolean(),
+});
+type BroadcastValues = z.infer<typeof broadcastSchema>;
+type TemplateValues = z.infer<typeof templateSchema>;
+const list = (value: string) =>
+  value
+    .split(/[,\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 
 export default function NotificationsPage() {
-  const client = useQueryClient(); const { hasPermission } = usePermissions();
-  const [broadcastOpen, setBroadcastOpen] = useState(false); const [templateOpen, setTemplateOpen] = useState(false); const [editing, setEditing] = useState<NotificationTemplate | null>(null); const [deletingTemplate, setDeletingTemplate] = useState<NotificationTemplate | null>(null);
-  const [emailStatus, setEmailStatus] = useState(""); const [preview, setPreview] = useState<{ title?: string | null; subject?: string | null; content: string; html?: string } | null>(null); const [variables, setVariables] = useState("{}"); const [testEmail, setTestEmail] = useState("");
-  const broadcastForm = useForm<BroadcastValues>({ resolver: zodResolver(broadcastSchema), defaultValues: { title: "", content: "", type: "SYSTEM", priority: "NORMAL", actionUrl: "" } });
-  const templateForm = useForm<TemplateValues>({ resolver: zodResolver(templateSchema), defaultValues: { code: "", name: "", description: "", channels: "WEB, EMAIL", subject: "", title: "", content: "", variables: "", isActive: true } });
-  const notifications = useQuery({ queryKey: ["notifications", "list"], queryFn: () => notificationService.getNotifications({ limit: 100 }) });
-  const emails = useQuery({ queryKey: ["notifications", "emails", emailStatus], queryFn: () => notificationService.getEmails({ status: emailStatus || undefined, limit: 100 }), enabled: hasPermission(PERMISSIONS.NOTIFICATION_READ) });
-  const templates = useQuery({ queryKey: ["notifications", "templates"], queryFn: () => notificationService.getTemplates({ limit: 100 }), enabled: hasPermission(PERMISSIONS.NOTIFICATION_TEMPLATE_READ) });
-  const refresh = () => client.invalidateQueries({ queryKey: ["notifications"] });
-  const read = useMutation({ mutationFn: notificationService.markRead, onSuccess: refresh }); const readAll = useMutation({ mutationFn: notificationService.markAllRead, onSuccess: () => { toast.success("Đã đánh dấu tất cả là đã đọc"); refresh(); } }); const removeNotification = useMutation({ mutationFn: notificationService.delete, onSuccess: refresh });
-  const broadcast = useMutation({ mutationFn: (values: BroadcastValues) => notificationService.broadcast({ ...values, actionUrl: values.actionUrl || undefined }), onSuccess: () => { toast.success("Đã phát thông báo"); setBroadcastOpen(false); broadcastForm.reset(); refresh(); }, onError: (error) => toast.error(getErrorMessage(error)) });
-  const retryEmail = useMutation({ mutationFn: notificationService.retryEmail, onSuccess: () => { toast.success("Email đã được xếp hàng gửi lại"); emails.refetch(); }, onError: (error) => toast.error(getErrorMessage(error)) });
-  const saveTemplate = useMutation({ mutationFn: (values: TemplateValues) => { const payload = { code: values.code, name: values.name, description: values.description || undefined, channels: list(values.channels), subject: values.subject || undefined, title: values.title || undefined, content: values.content, variables: list(values.variables), isActive: values.isActive }; return editing ? notificationService.updateTemplate(editing.id, payload) : notificationService.createTemplate(payload); }, onSuccess: () => { toast.success(editing ? "Đã cập nhật template" : "Đã tạo template"); setTemplateOpen(false); setEditing(null); templates.refetch(); }, onError: (error) => toast.error(getErrorMessage(error)) });
-  const deleteTemplate = useMutation({ mutationFn: notificationService.deleteTemplate, onSuccess: () => { toast.success("Đã xóa template"); setDeletingTemplate(null); templates.refetch(); }, onError: (error) => toast.error(getErrorMessage(error)) });
-  const parseVariables = () => { try { return JSON.parse(variables) as Record<string, unknown>; } catch { toast.error("Variables phải là JSON hợp lệ"); return null; } };
-  const previewTemplate = async (item: NotificationTemplate) => { const data = parseVariables(); if (!data) return; try { setPreview(await notificationService.previewTemplate(item.code, data)); } catch (error) { toast.error(getErrorMessage(error)); } };
-  const testTemplate = async (item: NotificationTemplate) => { const data = parseVariables(); if (!data) return; try { await notificationService.testTemplate(item.code, { toEmail: testEmail || undefined, variables: data, channels: item.channels }); toast.success("Đã gửi thử template"); } catch (error) { toast.error(getErrorMessage(error)); } };
-  const showTemplate = (item?: NotificationTemplate) => { setEditing(item ?? null); templateForm.reset(item ? { code: item.code, name: item.name, description: item.description ?? "", channels: item.channels.join(", "), subject: item.subject ?? "", title: item.title ?? "", content: item.content, variables: item.variables.join(", "), isActive: item.isActive } : { code: "", name: "", description: "", channels: "WEB, EMAIL", subject: "", title: "", content: "", variables: "", isActive: true }); setTemplateOpen(true); };
+  const { t, isMounted } = useTranslation();
+  const client = useQueryClient();
+  const { hasPermission } = usePermissions();
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [editing, setEditing] = useState<NotificationTemplate | null>(null);
+  const [deletingTemplate, setDeletingTemplate] = useState<NotificationTemplate | null>(null);
+  const [emailStatus, setEmailStatus] = useState("");
+  const [preview, setPreview] = useState<{ title?: string | null; subject?: string | null; content: string; html?: string } | null>(null);
+  const [variables, setVariables] = useState("{}");
+  const [testEmail, setTestEmail] = useState("");
 
-  return <div className="space-y-6"><PageHeader icon={Bell} title="Trung tâm thông báo" description="Thông báo realtime, broadcast, hàng đợi email và template đa kênh." actions={<PermissionGate permission={PERMISSIONS.NOTIFICATION_CREATE}><Button onClick={() => setBroadcastOpen(true)}><Send />Broadcast</Button></PermissionGate>} /><Tabs defaultValue="inbox"><TabsList className="flex-wrap"><TabsTrigger value="inbox">Hộp thư</TabsTrigger><TabsTrigger value="emails">Email queue</TabsTrigger><TabsTrigger value="templates">Templates</TabsTrigger></TabsList>
-  <TabsContent value="inbox"><div className="space-y-4"><div className="flex justify-end"><Button variant="outline" disabled={readAll.isPending} onClick={() => readAll.mutate()}><CheckCheck />Đọc tất cả</Button></div><AsyncState loading={notifications.isLoading} error={notifications.isError} empty={!notifications.isLoading && !notifications.isError && !notifications.data?.data.length} emptyText="Chưa có thông báo" />{notifications.data?.data.map((item) => <Card key={item.id} className={item.isRead ? "opacity-70" : "border-kawaii-babyblue"}><CardContent className="flex items-start justify-between gap-4 pt-6 md:pt-8"><button className="flex-1 text-left" onClick={() => !item.isRead && read.mutate(item.id)}><div className="flex flex-wrap items-center gap-2"><h2 className="font-black text-kawaii-mocha">{item.title}</h2><Badge variant={item.priority === "HIGH" ? "destructive" : "secondary"}>{item.type}</Badge>{!item.isRead && <Badge variant="default">Mới</Badge>}</div><p className="mt-2 text-sm text-kawaii-mocha/65">{item.content}</p><p className="mt-2 text-xs text-kawaii-mocha/45">{formatDate(item.createdAt)}</p></button><Button variant="ghost" size="icon" aria-label="Xóa" onClick={() => removeNotification.mutate(item.id)}><Trash2 /></Button></CardContent></Card>)}</div></TabsContent>
-  <TabsContent value="emails"><PermissionGate permission={PERMISSIONS.NOTIFICATION_READ} fallback={<AsyncState error />}><div className="space-y-4"><select className={`${selectClassName} max-w-xs`} value={emailStatus} onChange={(event) => setEmailStatus(event.target.value)}><option value="">Mọi trạng thái</option><option value="PENDING">Đang chờ</option><option value="SENT">Đã gửi</option><option value="FAILED">Thất bại</option></select><AsyncState loading={emails.isLoading} error={emails.isError} empty={!emails.isLoading && !emails.isError && !emails.data?.data.length} emptyText="Chưa có email" />{emails.data?.data.map((item) => <Card key={item.id}><CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between md:pt-8"><div><div className="flex gap-2"><Mail className="h-4 w-4 text-kawaii-mocha" /><h2 className="font-bold text-kawaii-mocha">{item.subject}</h2><Badge variant={item.status === "SENT" ? "default" : item.status === "FAILED" ? "destructive" : "secondary"}>{item.status}</Badge></div><p className="mt-1 text-xs text-kawaii-mocha/55">{item.toEmail} · {item.templateKey} · {item.attempts} lần thử</p>{item.lastError && <p className="mt-1 text-xs text-destructive">{item.lastError}</p>}</div>{item.status === "FAILED" && <PermissionGate permission={PERMISSIONS.NOTIFICATION_UPDATE}><Button variant="outline" size="sm" disabled={retryEmail.isPending} onClick={() => retryEmail.mutate(item.id)}><RefreshCcw />Gửi lại</Button></PermissionGate>}</CardContent></Card>)}</div></PermissionGate></TabsContent>
-  <TabsContent value="templates"><PermissionGate permission={PERMISSIONS.NOTIFICATION_TEMPLATE_READ} fallback={<AsyncState error />}><div className="space-y-4"><div className="flex justify-end"><PermissionGate permission={PERMISSIONS.NOTIFICATION_TEMPLATE_MANAGE}><Button onClick={() => showTemplate()}><Plus />Tạo template</Button></PermissionGate></div><Card><CardContent className="grid gap-3 pt-6 md:grid-cols-[1fr_240px] md:pt-8"><Field label="Variables dùng khi preview/test (JSON)"><Textarea className="font-mono" value={variables} onChange={(event) => setVariables(event.target.value)} /></Field><Field label="Email nhận bản test"><Input type="email" value={testEmail} onChange={(event) => setTestEmail(event.target.value)} /></Field></CardContent></Card><AsyncState loading={templates.isLoading} error={templates.isError} empty={!templates.isLoading && !templates.isError && !templates.data?.data.length} emptyText="Chưa có template" /><div className="grid gap-4 md:grid-cols-2">{templates.data?.data.map((item) => <Card key={item.id}><CardContent className="pt-6 md:pt-8"><div className="flex items-start justify-between"><div><h2 className="font-black text-kawaii-mocha">{item.name}</h2><p className="font-mono text-xs text-kawaii-mocha/55">{item.code}</p></div><Badge variant={item.isActive ? "default" : "secondary"}>{item.isActive ? "Hoạt động" : "Đã tắt"}</Badge></div><p className="mt-3 line-clamp-2 text-sm text-kawaii-mocha/60">{item.content}</p><p className="mt-3 text-xs font-bold text-kawaii-mocha/55">{item.channels.join(", ")}</p><div className="mt-5 flex flex-wrap justify-end gap-2"><Button variant="outline" size="sm" onClick={() => previewTemplate(item)}><Eye />Preview</Button><PermissionGate permission={PERMISSIONS.NOTIFICATION_TEMPLATE_MANAGE}><Button variant="outline" size="sm" onClick={() => testTemplate(item)}><Send />Gửi thử</Button><Button variant="outline" size="icon" onClick={() => showTemplate(item)} aria-label="Sửa"><Edit3 /></Button>{!item.isSystem && <Button variant="destructive" size="icon" onClick={() => setDeletingTemplate(item)} aria-label="Xóa"><Trash2 /></Button>}</PermissionGate></div></CardContent></Card>)}</div></div></PermissionGate></TabsContent></Tabs>
-  <Dialog open={broadcastOpen} onOpenChange={setBroadcastOpen}><DialogContent><DialogHeader><DialogTitle>Broadcast thông báo</DialogTitle><DialogDescription>Thông báo sẽ được lưu và đẩy realtime đến toàn bộ người dùng.</DialogDescription></DialogHeader><form className="space-y-4" onSubmit={broadcastForm.handleSubmit((values) => broadcast.mutate(values))}><Field label="Tiêu đề" error={broadcastForm.formState.errors.title?.message}><Input {...broadcastForm.register("title")} /></Field><Field label="Nội dung" error={broadcastForm.formState.errors.content?.message}><Textarea {...broadcastForm.register("content")} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Loại"><select className={selectClassName} {...broadcastForm.register("type")}><option>SYSTEM</option><option>INFO</option><option>SUCCESS</option><option>WARNING</option><option>ALERT</option></select></Field><Field label="Ưu tiên"><select className={selectClassName} {...broadcastForm.register("priority")}><option>LOW</option><option>NORMAL</option><option>HIGH</option></select></Field></div><Field label="Action URL" error={broadcastForm.formState.errors.actionUrl?.message}><Input {...broadcastForm.register("actionUrl")} /></Field><DialogFooter><Button type="button" variant="outline" onClick={() => setBroadcastOpen(false)}>Hủy</Button><Button type="submit" disabled={broadcast.isPending}>{broadcast.isPending ? "Đang gửi..." : "Phát thông báo"}</Button></DialogFooter></form></DialogContent></Dialog>
-  <Dialog open={templateOpen} onOpenChange={setTemplateOpen}><DialogContent><DialogHeader><DialogTitle>{editing ? "Chỉnh sửa template" : "Tạo template"}</DialogTitle><DialogDescription>Biến template nhập cách nhau bởi dấu phẩy hoặc xuống dòng.</DialogDescription></DialogHeader><form className="space-y-4" onSubmit={templateForm.handleSubmit((values) => saveTemplate.mutate(values))}><div className="grid gap-4 sm:grid-cols-2"><Field label="Code" error={templateForm.formState.errors.code?.message}><Input disabled={Boolean(editing)} {...templateForm.register("code")} /></Field><Field label="Tên" error={templateForm.formState.errors.name?.message}><Input {...templateForm.register("name")} /></Field></div><Field label="Mô tả"><Input {...templateForm.register("description")} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Channels" error={templateForm.formState.errors.channels?.message}><Input {...templateForm.register("channels")} /></Field><Field label="Variables"><Input {...templateForm.register("variables")} /></Field></div><div className="grid gap-4 sm:grid-cols-2"><Field label="Email subject"><Input {...templateForm.register("subject")} /></Field><Field label="Web title"><Input {...templateForm.register("title")} /></Field></div><Field label="Nội dung" error={templateForm.formState.errors.content?.message}><Textarea className="min-h-40 font-mono" {...templateForm.register("content")} /></Field><label className="flex items-center gap-2 rounded-2xl bg-kawaii-sky/20 p-3 text-sm font-bold text-kawaii-mocha"><input type="checkbox" {...templateForm.register("isActive")} />Kích hoạt template</label><DialogFooter><Button type="button" variant="outline" onClick={() => setTemplateOpen(false)}>Hủy</Button><Button type="submit" disabled={saveTemplate.isPending}>{saveTemplate.isPending ? "Đang lưu..." : "Lưu template"}</Button></DialogFooter></form></DialogContent></Dialog>
-  <Dialog open={Boolean(preview)} onOpenChange={(next) => !next && setPreview(null)}><DialogContent><DialogHeader><DialogTitle>{preview?.subject || preview?.title || "Template preview"}</DialogTitle><DialogDescription>Bản render từ variables đã nhập.</DialogDescription></DialogHeader>{preview?.html ? <iframe title="Email preview" className="h-96 w-full rounded-2xl border-2 border-kawaii-sky/35 bg-white" srcDoc={preview.html} sandbox="" /> : <pre className="whitespace-pre-wrap rounded-2xl bg-kawaii-cloud/35 p-4 text-sm text-kawaii-mocha">{preview?.content}</pre>}</DialogContent></Dialog>
-  <ConfirmDialog open={Boolean(deletingTemplate)} onOpenChange={(next) => !next && setDeletingTemplate(null)} title="Xóa template?" description="Template tùy biến sẽ bị xóa vĩnh viễn." busy={deleteTemplate.isPending} onConfirm={() => deletingTemplate && deleteTemplate.mutate(deletingTemplate.id)} />
-  </div>;
+  const broadcastForm = useForm<BroadcastValues>({
+    resolver: zodResolver(broadcastSchema),
+    defaultValues: { title: "", content: "", type: "SYSTEM", priority: "NORMAL", actionUrl: "" },
+  });
+  const templateForm = useForm<TemplateValues>({
+    resolver: zodResolver(templateSchema),
+    defaultValues: {
+      code: "",
+      name: "",
+      description: "",
+      channels: "WEB, EMAIL",
+      subject: "",
+      title: "",
+      content: "",
+      variables: "",
+      isActive: true,
+    },
+  });
+
+  const notifications = useQuery({
+    queryKey: ["notifications", "list"],
+    queryFn: () => notificationService.getNotifications({ limit: 100 }),
+  });
+  const emails = useQuery({
+    queryKey: ["notifications", "emails", emailStatus],
+    queryFn: () => notificationService.getEmails({ status: emailStatus || undefined, limit: 100 }),
+    enabled: hasPermission(PERMISSIONS.NOTIFICATION_READ),
+  });
+  const templates = useQuery({
+    queryKey: ["notifications", "templates"],
+    queryFn: () => notificationService.getTemplates({ limit: 100 }),
+    enabled: hasPermission(PERMISSIONS.NOTIFICATION_TEMPLATE_READ),
+  });
+
+  const refresh = () => client.invalidateQueries({ queryKey: ["notifications"] });
+  const read = useMutation({ mutationFn: notificationService.markRead, onSuccess: refresh });
+  const readAll = useMutation({
+    mutationFn: notificationService.markAllRead,
+    onSuccess: () => {
+      toast.success(isMounted ? t.adminNotifications.markAllReadSuccess : "Đã đánh dấu tất cả là đã đọc");
+      refresh();
+    },
+  });
+  const removeNotification = useMutation({ mutationFn: notificationService.delete, onSuccess: refresh });
+
+  const broadcast = useMutation({
+    mutationFn: (values: BroadcastValues) => notificationService.broadcast({ ...values, actionUrl: values.actionUrl || undefined }),
+    onSuccess: () => {
+      toast.success(isMounted ? t.adminNotifications.broadcastSuccess : "Đã phát thông báo");
+      setBroadcastOpen(false);
+      broadcastForm.reset();
+      refresh();
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+  const retryEmail = useMutation({
+    mutationFn: notificationService.retryEmail,
+    onSuccess: () => {
+      toast.success(isMounted ? t.adminNotifications.retrySuccess : "Email đã được xếp hàng gửi lại");
+      emails.refetch();
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+  const saveTemplate = useMutation({
+    mutationFn: (values: TemplateValues) => {
+      const payload = {
+        code: values.code,
+        name: values.name,
+        description: values.description || undefined,
+        channels: list(values.channels),
+        subject: values.subject || undefined,
+        title: values.title || undefined,
+        content: values.content,
+        variables: list(values.variables),
+        isActive: values.isActive,
+      };
+      return editing ? notificationService.updateTemplate(editing.id, payload) : notificationService.createTemplate(payload);
+    },
+    onSuccess: () => {
+      toast.success(editing ? (isMounted ? t.adminNotifications.templateUpdatedSuccess : "Đã cập nhật template") : (isMounted ? t.adminNotifications.templateCreatedSuccess : "Đã tạo template"));
+      setTemplateOpen(false);
+      setEditing(null);
+      templates.refetch();
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+  const deleteTemplate = useMutation({
+    mutationFn: notificationService.deleteTemplate,
+    onSuccess: () => {
+      toast.success(isMounted ? t.adminNotifications.templateDeletedSuccess : "Đã xóa template");
+      setDeletingTemplate(null);
+      templates.refetch();
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+  const parseVariables = () => {
+    try {
+      return JSON.parse(variables) as Record<string, unknown>;
+    } catch {
+      toast.error(isMounted ? t.adminNotifications.invalidJsonVariables : "Variables phải là JSON hợp lệ");
+      return null;
+    }
+  };
+
+  const previewTemplate = async (item: NotificationTemplate) => {
+    const data = parseVariables();
+    if (!data) return;
+    try {
+      setPreview(await notificationService.previewTemplate(item.code, data));
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
+  const testTemplate = async (item: NotificationTemplate) => {
+    const data = parseVariables();
+    if (!data) return;
+    try {
+      await notificationService.testTemplate(item.code, { toEmail: testEmail || undefined, variables: data, channels: item.channels });
+      toast.success(isMounted ? t.adminNotifications.sendTestSuccess : "Đã gửi thử template");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
+  const showTemplate = (item?: NotificationTemplate) => {
+    setEditing(item ?? null);
+    templateForm.reset(
+      item
+        ? {
+            code: item.code,
+            name: item.name,
+            description: item.description ?? "",
+            channels: item.channels.join(", "),
+            subject: item.subject ?? "",
+            title: item.title ?? "",
+            content: item.content,
+            variables: item.variables.join(", "),
+            isActive: item.isActive,
+          }
+        : {
+            code: "",
+            name: "",
+            description: "",
+            channels: "WEB, EMAIL",
+            subject: "",
+            title: "",
+            content: "",
+            variables: "",
+            isActive: true,
+          },
+    );
+    setTemplateOpen(true);
+  };
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        icon={Bell}
+        title={isMounted ? t.adminNotifications.title : "Trung tâm thông báo"}
+        description={isMounted ? t.adminNotifications.description : "Thông báo realtime, broadcast, hàng đợi email và template đa kênh."}
+        actions={
+          <PermissionGate permission={PERMISSIONS.NOTIFICATION_CREATE}>
+            <Button onClick={() => setBroadcastOpen(true)}>
+              <Send />
+              {isMounted ? t.adminNotifications.broadcastBtn : "Broadcast"}
+            </Button>
+          </PermissionGate>
+        }
+      />
+      <Tabs defaultValue="inbox">
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="inbox">{isMounted ? t.adminNotifications.tabInbox : "Hộp thư"}</TabsTrigger>
+          <TabsTrigger value="emails">{isMounted ? t.adminNotifications.tabEmailQueue : "Email queue"}</TabsTrigger>
+          <TabsTrigger value="templates">{isMounted ? t.adminNotifications.tabTemplates : "Templates"}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="inbox">
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <Button variant="outline" disabled={readAll.isPending} onClick={() => readAll.mutate()}>
+                <CheckCheck />
+                {isMounted ? t.adminNotifications.markAllRead : "Đọc tất cả"}
+              </Button>
+            </div>
+            <AsyncState
+              loading={notifications.isLoading}
+              error={notifications.isError}
+              empty={!notifications.isLoading && !notifications.isError && !notifications.data?.data.length}
+              emptyText={isMounted ? t.adminNotifications.noNotifications : "Chưa có thông báo"}
+            />
+            {notifications.data?.data.map((item) => (
+              <Card key={item.id} className={item.isRead ? "opacity-70" : "border-kawaii-babyblue"}>
+                <CardContent className="flex items-start justify-between gap-4 pt-6 md:pt-8">
+                  <button className="flex-1 text-left" onClick={() => !item.isRead && read.mutate(item.id)}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="font-black text-kawaii-mocha">{item.title}</h2>
+                      <Badge variant={item.priority === "HIGH" ? "destructive" : "secondary"}>{item.type}</Badge>
+                      {!item.isRead && <Badge variant="default">{isMounted ? t.adminNotifications.badgeNew : "Mới"}</Badge>}
+                    </div>
+                    <p className="mt-2 text-sm text-kawaii-mocha/65">{item.content}</p>
+                    <p className="mt-2 text-xs text-kawaii-mocha/45">{formatDate(item.createdAt)}</p>
+                  </button>
+                  <Button variant="ghost" size="icon" aria-label={isMounted ? t.adminUi.delete : "Xóa"} onClick={() => removeNotification.mutate(item.id)}>
+                    <Trash2 />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+        <TabsContent value="emails">
+          <PermissionGate permission={PERMISSIONS.NOTIFICATION_READ} fallback={<AsyncState error />}>
+            <div className="space-y-4">
+              <select className={`${selectClassName} max-w-xs`} value={emailStatus} onChange={(event) => setEmailStatus(event.target.value)}>
+                <option value="">{isMounted ? t.adminNotifications.allStatuses : "Mọi trạng thái"}</option>
+                <option value="PENDING">{isMounted ? t.adminNotifications.statusPending : "Đang chờ"}</option>
+                <option value="SENT">{isMounted ? t.adminNotifications.statusSent : "Đã gửi"}</option>
+                <option value="FAILED">{isMounted ? t.adminNotifications.statusFailed : "Thất bại"}</option>
+              </select>
+              <AsyncState
+                loading={emails.isLoading}
+                error={emails.isError}
+                empty={!emails.isLoading && !emails.isError && !emails.data?.data.length}
+                emptyText={isMounted ? t.adminNotifications.noEmails : "Chưa có email"}
+              />
+              {emails.data?.data.map((item) => (
+                <Card key={item.id}>
+                  <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between md:pt-8">
+                    <div>
+                      <div className="flex gap-2">
+                        <Mail className="h-4 w-4 text-kawaii-mocha" />
+                        <h2 className="font-bold text-kawaii-mocha">{item.subject}</h2>
+                        <Badge variant={item.status === "SENT" ? "default" : item.status === "FAILED" ? "destructive" : "secondary"}>
+                          {item.status}
+                        </Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-kawaii-mocha/55">
+                        {item.toEmail} · {item.templateKey} · {item.attempts} {isMounted ? t.adminNotifications.attemptsCount : "lần thử"}
+                      </p>
+                      {item.lastError && <p className="mt-1 text-xs text-destructive">{item.lastError}</p>}
+                    </div>
+                    {item.status === "FAILED" && (
+                      <PermissionGate permission={PERMISSIONS.NOTIFICATION_UPDATE}>
+                        <Button variant="outline" size="sm" disabled={retryEmail.isPending} onClick={() => retryEmail.mutate(item.id)}>
+                          <RefreshCcw />
+                          {isMounted ? t.adminNotifications.resendBtn : "Gửi lại"}
+                        </Button>
+                      </PermissionGate>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </PermissionGate>
+        </TabsContent>
+        <TabsContent value="templates">
+          <PermissionGate permission={PERMISSIONS.NOTIFICATION_TEMPLATE_READ} fallback={<AsyncState error />}>
+            <div className="space-y-4">
+              <div className="flex justify-end">
+                <PermissionGate permission={PERMISSIONS.NOTIFICATION_TEMPLATE_MANAGE}>
+                  <Button onClick={() => showTemplate()}>
+                    <Plus />
+                    {isMounted ? t.adminNotifications.createTemplateBtn : "Tạo template"}
+                  </Button>
+                </PermissionGate>
+              </div>
+              <Card>
+                <CardContent className="grid gap-3 pt-6 md:grid-cols-[1fr_240px] md:pt-8">
+                  <Field label={isMounted ? t.adminNotifications.variablesLabel : "Variables dùng khi preview/test (JSON)"}>
+                    <Textarea className="font-mono" value={variables} onChange={(event) => setVariables(event.target.value)} />
+                  </Field>
+                  <Field label={isMounted ? t.adminNotifications.testEmailLabel : "Email nhận bản test"}>
+                    <Input type="email" value={testEmail} onChange={(event) => setTestEmail(event.target.value)} />
+                  </Field>
+                </CardContent>
+              </Card>
+              <AsyncState
+                loading={templates.isLoading}
+                error={templates.isError}
+                empty={!templates.isLoading && !templates.isError && !templates.data?.data.length}
+                emptyText={isMounted ? t.adminNotifications.noTemplates : "Chưa có template"}
+              />
+              <div className="grid gap-4 md:grid-cols-2">
+                {templates.data?.data.map((item) => (
+                  <Card key={item.id}>
+                    <CardContent className="pt-6 md:pt-8">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h2 className="font-black text-kawaii-mocha">{item.name}</h2>
+                          <p className="font-mono text-xs text-kawaii-mocha/55">{item.code}</p>
+                        </div>
+                        <Badge variant={item.isActive ? "default" : "secondary"}>
+                          {item.isActive
+                            ? (isMounted ? t.adminNotifications.active : "Hoạt động")
+                            : (isMounted ? t.adminNotifications.disabled : "Đã tắt")}
+                        </Badge>
+                      </div>
+                      <p className="mt-3 line-clamp-2 text-sm text-kawaii-mocha/60">{item.content}</p>
+                      <p className="mt-3 text-xs font-bold text-kawaii-mocha/55">{item.channels.join(", ")}</p>
+                      <div className="mt-5 flex flex-wrap justify-end gap-2">
+                        <Button variant="outline" size="sm" onClick={() => previewTemplate(item)}>
+                          <Eye />
+                          {isMounted ? t.adminNotifications.previewBtn : "Preview"}
+                        </Button>
+                        <PermissionGate permission={PERMISSIONS.NOTIFICATION_TEMPLATE_MANAGE}>
+                          <Button variant="outline" size="sm" onClick={() => testTemplate(item)}>
+                            <Send />
+                            {isMounted ? t.adminNotifications.testSendBtn : "Gửi thử"}
+                          </Button>
+                          <Button variant="outline" size="icon" onClick={() => showTemplate(item)} aria-label={isMounted ? t.adminUi.edit : "Sửa"}>
+                            <Edit3 />
+                          </Button>
+                          {!item.isSystem && (
+                            <Button variant="destructive" size="icon" onClick={() => setDeletingTemplate(item)} aria-label={isMounted ? t.adminUi.delete : "Xóa"}>
+                              <Trash2 />
+                            </Button>
+                          )}
+                        </PermissionGate>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </PermissionGate>
+        </TabsContent>
+      </Tabs>
+      <Dialog open={broadcastOpen} onOpenChange={setBroadcastOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-kawaii-mocha">
+              {isMounted ? t.adminNotifications.broadcastTitle : "Broadcast thông báo"}
+            </DialogTitle>
+            <DialogDescription>
+              {isMounted ? t.adminNotifications.broadcastDesc : "Thông báo sẽ được lưu và đẩy realtime đến toàn bộ người dùng."}
+            </DialogDescription>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={broadcastForm.handleSubmit((values) => broadcast.mutate(values))}>
+            <Field label={isMounted ? t.adminNotifications.broadcastFormTitle : "Tiêu đề"} error={broadcastForm.formState.errors.title?.message}>
+              <Input {...broadcastForm.register("title")} />
+            </Field>
+            <Field label={isMounted ? t.adminNotifications.broadcastFormContent : "Nội dung"} error={broadcastForm.formState.errors.content?.message}>
+              <Textarea {...broadcastForm.register("content")} />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label={isMounted ? t.adminNotifications.broadcastFormType : "Loại"}>
+                <select className={selectClassName} {...broadcastForm.register("type")}>
+                  <option>SYSTEM</option>
+                  <option>INFO</option>
+                  <option>SUCCESS</option>
+                  <option>WARNING</option>
+                  <option>ALERT</option>
+                </select>
+              </Field>
+              <Field label={isMounted ? t.adminNotifications.broadcastFormPriority : "Ưu tiên"}>
+                <select className={selectClassName} {...broadcastForm.register("priority")}>
+                  <option>LOW</option>
+                  <option>NORMAL</option>
+                  <option>HIGH</option>
+                </select>
+              </Field>
+            </div>
+            <Field label="Action URL" error={broadcastForm.formState.errors.actionUrl?.message}>
+              <Input {...broadcastForm.register("actionUrl")} />
+            </Field>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setBroadcastOpen(false)}>
+                {isMounted ? t.adminUi.cancel : "Hủy"}
+              </Button>
+              <Button type="submit" disabled={broadcast.isPending}>
+                {broadcast.isPending
+                  ? (isMounted ? t.adminUi.processing : "Đang gửi...")
+                  : (isMounted ? t.adminNotifications.broadcastSendBtn : "Phát thông báo")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-kawaii-mocha">
+              {editing
+                ? (isMounted ? t.adminNotifications.templateEditTitle : "Chỉnh sửa template")
+                : (isMounted ? t.adminNotifications.templateCreateTitle : "Tạo template")}
+            </DialogTitle>
+            <DialogDescription>
+              {isMounted ? t.adminNotifications.templateFormDesc : "Biến template nhập cách nhau bởi dấu phẩy hoặc xuống dòng."}
+            </DialogDescription>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={templateForm.handleSubmit((values) => saveTemplate.mutate(values))}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Code" error={templateForm.formState.errors.code?.message}>
+                <Input disabled={Boolean(editing)} {...templateForm.register("code")} />
+              </Field>
+              <Field label={isMounted ? t.adminNotifications.templateNameLabel : "Tên"} error={templateForm.formState.errors.name?.message}>
+                <Input {...templateForm.register("name")} />
+              </Field>
+            </div>
+            <Field label={isMounted ? t.adminNotifications.templateDescLabel : "Mô tả"}>
+              <Input {...templateForm.register("description")} />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Channels" error={templateForm.formState.errors.channels?.message}>
+                <Input {...templateForm.register("channels")} />
+              </Field>
+              <Field label="Variables">
+                <Input {...templateForm.register("variables")} />
+              </Field>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Email subject">
+                <Input {...templateForm.register("subject")} />
+              </Field>
+              <Field label="Web title">
+                <Input {...templateForm.register("title")} />
+              </Field>
+            </div>
+            <Field label={isMounted ? t.adminNotifications.templateContentLabel : "Nội dung"} error={templateForm.formState.errors.content?.message}>
+              <Textarea className="min-h-40 font-mono" {...templateForm.register("content")} />
+            </Field>
+            <label className="flex items-center gap-2 rounded-2xl bg-kawaii-sky/20 p-3 text-sm font-bold text-kawaii-mocha">
+              <input type="checkbox" {...templateForm.register("isActive")} />
+              {isMounted ? t.adminNotifications.activateTemplate : "Kích hoạt template"}
+            </label>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setTemplateOpen(false)}>
+                {isMounted ? t.adminUi.cancel : "Hủy"}
+              </Button>
+              <Button type="submit" disabled={saveTemplate.isPending}>
+                {saveTemplate.isPending
+                  ? (isMounted ? t.adminUi.saving : "Đang lưu...")
+                  : (isMounted ? t.adminNotifications.saveTemplateBtn : "Lưu template")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={Boolean(preview)} onOpenChange={(next) => !next && setPreview(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-kawaii-mocha">
+              {preview?.subject || preview?.title || (isMounted ? t.adminNotifications.templatePreviewTitle : "Template preview")}
+            </DialogTitle>
+            <DialogDescription>
+              {isMounted ? t.adminNotifications.templatePreviewDesc : "Bản render từ variables đã nhập."}
+            </DialogDescription>
+          </DialogHeader>
+          {preview?.html ? (
+            <iframe title="Email preview" className="h-96 w-full rounded-2xl border-2 border-kawaii-sky/35 bg-white" srcDoc={preview.html} sandbox="" />
+          ) : (
+            <pre className="whitespace-pre-wrap rounded-2xl bg-kawaii-cloud/35 p-4 text-sm text-kawaii-mocha">{preview?.content}</pre>
+          )}
+        </DialogContent>
+      </Dialog>
+      <ConfirmDialog
+        open={Boolean(deletingTemplate)}
+        onOpenChange={(next) => !next && setDeletingTemplate(null)}
+        title={isMounted ? t.adminNotifications.deleteTemplateTitle : "Xóa template?"}
+        description={isMounted ? t.adminNotifications.deleteTemplateDesc : "Template tùy biến sẽ bị xóa vĩnh viễn."}
+        busy={deleteTemplate.isPending}
+        onConfirm={() => deletingTemplate && deleteTemplate.mutate(deletingTemplate.id)}
+      />
+    </div>
+  );
 }
+

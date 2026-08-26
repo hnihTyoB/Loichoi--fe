@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { authService } from "@/services/auth.service";
 import { useTranslation } from "@/hooks/use-translation";
 
@@ -103,8 +104,7 @@ export default function LoginPage() {
                 {isMounted ? t.auth.forgotPassword : "Quên mật khẩu?"}
               </Link>
             </div>
-            <Input
-              type="password"
+            <PasswordInput
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

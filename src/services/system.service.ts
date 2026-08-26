@@ -40,4 +40,22 @@ export const systemService = {
     const response = await apiClient.get<PageResult<AuditLog>>("/rbac/audit-logs", { params });
     return response.data;
   },
+  async getHealthReadiness(): Promise<{
+    status: "healthy" | "unhealthy";
+    timestamp: string;
+    totalDurationMs?: number;
+    checks?: {
+      database?: { status: "healthy" | "unhealthy" | "skipped"; latencyMs?: number; error?: string };
+      redis?: { status: "healthy" | "unhealthy" | "skipped"; latencyMs?: number; error?: string };
+    };
+    metrics?: {
+      uptimeSeconds?: number;
+      heapUsedMb?: number;
+      heapTotalMb?: number;
+      rssMb?: number;
+    };
+  }> {
+    const response = await apiClient.get("/health/readiness");
+    return response.data;
+  },
 };

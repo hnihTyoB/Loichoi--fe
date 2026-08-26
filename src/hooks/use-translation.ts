@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { dictionary, Language } from "@/lib/i18n";
+import { dictionary } from "@/lib/i18n";
+import type { Language } from "@/lib/i18n";
 import { useLanguageStore } from "@/stores/language-store";
 
 export function useTranslation() {

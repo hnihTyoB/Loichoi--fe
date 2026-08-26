@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    webpackBuildWorker: false,
+  },
   async rewrites() {
     return [
       {

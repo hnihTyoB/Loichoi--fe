@@ -12,8 +12,6 @@ export function formatDate(date: string | Date | null | undefined): string {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
   }).format(d);
 }
 

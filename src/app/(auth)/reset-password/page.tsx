@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { useTranslation } from "@/hooks/use-translation";
 
 export default function ResetPasswordPage() {
@@ -58,8 +59,7 @@ export default function ResetPasswordPage() {
             <label className="text-xs font-bold text-kawaii-mocha ml-1">
               {isMounted ? t.auth.newPassword : "Mật khẩu mới"}
             </label>
-            <Input
-              type="password"
+            <PasswordInput
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -71,8 +71,7 @@ export default function ResetPasswordPage() {
             <label className="text-xs font-bold text-kawaii-mocha ml-1">
               {isMounted ? t.auth.confirmPassword : "Xác nhận mật khẩu"}
             </label>
-            <Input
-              type="password"
+            <PasswordInput
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

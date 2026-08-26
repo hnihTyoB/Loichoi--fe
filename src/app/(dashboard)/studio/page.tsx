@@ -16,31 +16,293 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useTranslation } from "@/hooks/use-translation";
 import { PERMISSIONS } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
 import { categoryService } from "@/services/category.service";
 import { studioService } from "@/services/studio.service";
 import type { AdminKeyboard, KeyboardPayload } from "@/types/admin.types";
 
-const profileSchema = z.object({ username: z.string().min(3).max(50).regex(/^[a-z0-9_]+$/, "Chỉ dùng chữ thường, số và gạch dưới"), fullName: z.string().max(100), bio: z.string().max(500), avatarUrl: z.string().refine((value) => !value || z.string().url().safeParse(value).success, "URL không hợp lệ"), bannerUrl: z.string().refine((value) => !value || z.string().url().safeParse(value).success, "URL không hợp lệ"), portfolioUrl: z.string().refine((value) => !value || z.string().url().safeParse(value).success, "URL không hợp lệ") });
+const profileSchema = z.object({
+  username: z.string().min(3).max(50).regex(/^[a-z0-9_]+$/, "Chỉ dùng chữ thường, số và gạch dưới"),
+  fullName: z.string().max(100),
+  bio: z.string().max(500),
+  avatarUrl: z.string().refine((value) => !value || z.string().url().safeParse(value).success, "URL không hợp lệ"),
+  bannerUrl: z.string().refine((value) => !value || z.string().url().safeParse(value).success, "URL không hợp lệ"),
+  portfolioUrl: z.string().refine((value) => !value || z.string().url().safeParse(value).success, "URL không hợp lệ"),
+});
 type ProfileValues = z.infer<typeof profileSchema>;
 
 export default function StudioPage() {
-  const client = useQueryClient(); const [themeOpen, setThemeOpen] = useState(false); const [editing, setEditing] = useState<AdminKeyboard | null>(null); const [deleting, setDeleting] = useState<AdminKeyboard | null>(null); const [profileOpen, setProfileOpen] = useState(false);
-  const profile = useForm<ProfileValues>({ resolver: zodResolver(profileSchema), defaultValues: { username: "", fullName: "", bio: "", avatarUrl: "", bannerUrl: "", portfolioUrl: "" } });
-  const stats = useQuery({ queryKey: ["studio", "stats"], queryFn: studioService.getStats }); const themes = useQuery({ queryKey: ["studio", "themes"], queryFn: () => studioService.getThemes({ limit: 100 }) }); const categories = useQuery({ queryKey: ["categories", "manage", "studio-options"], queryFn: () => categoryService.getManagementList({ limit: 100, isActive: true }) });
-  const refresh = () => { client.invalidateQueries({ queryKey: ["studio"] }); };
-  const saveTheme = useMutation({ mutationFn: ({ payload, id }: { payload: KeyboardPayload; id?: string }) => id ? studioService.updateTheme(id, payload) : studioService.createTheme(payload), onSuccess: () => { toast.success(editing ? "Đã cập nhật theme" : "Đã tạo theme"); setThemeOpen(false); setEditing(null); refresh(); }, onError: (error) => toast.error(getErrorMessage(error)) });
-  const remove = useMutation({ mutationFn: studioService.deleteTheme, onSuccess: () => { toast.success("Đã xóa theme"); setDeleting(null); refresh(); }, onError: (error) => toast.error(getErrorMessage(error)) });
-  const saveProfile = useMutation({ mutationFn: (values: ProfileValues) => studioService.updateProfile({ username: values.username, fullName: values.fullName || undefined, bio: values.bio || null, avatarUrl: values.avatarUrl || null, bannerUrl: values.bannerUrl || null, socialLinks: values.portfolioUrl ? { portfolio: values.portfolioUrl } : null }), onSuccess: () => { toast.success("Đã cập nhật hồ sơ creator"); setProfileOpen(false); }, onError: (error) => toast.error(getErrorMessage(error)) });
-  const apply = useMutation({ mutationFn: (values: ProfileValues) => studioService.apply({ username: values.username, bio: values.bio || undefined, socialLinks: values.portfolioUrl ? { portfolio: values.portfolioUrl } : undefined }), onSuccess: () => { toast.success("Đã gửi đơn đăng ký creator"); setProfileOpen(false); }, onError: (error) => toast.error(getErrorMessage(error)) });
-  const editTheme = (item: AdminKeyboard) => { const categoryOptions = categories.data?.data ?? []; setEditing({ ...item, categories: categoryOptions.filter((category) => item.categoryNames.includes(category.name)).map((category) => ({ ...category, isActive: category.isActive })) }); setThemeOpen(true); };
+  const { t, isMounted } = useTranslation();
+  const client = useQueryClient();
+  const [themeOpen, setThemeOpen] = useState(false);
+  const [editing, setEditing] = useState<AdminKeyboard | null>(null);
+  const [deleting, setDeleting] = useState<AdminKeyboard | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const profile = useForm<ProfileValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: { username: "", fullName: "", bio: "", avatarUrl: "", bannerUrl: "", portfolioUrl: "" },
+  });
+
+  const stats = useQuery({ queryKey: ["studio", "stats"], queryFn: studioService.getStats });
+  const themes = useQuery({ queryKey: ["studio", "themes"], queryFn: () => studioService.getThemes({ limit: 100 }) });
+  const categories = useQuery({
+    queryKey: ["categories", "manage", "studio-options"],
+    queryFn: () => categoryService.getManagementList({ limit: 100, isActive: true }),
+  });
+
+  const refresh = () => {
+    client.invalidateQueries({ queryKey: ["studio"] });
+  };
+
+  const saveTheme = useMutation({
+    mutationFn: ({ payload, id }: { payload: KeyboardPayload; id?: string }) =>
+      id ? studioService.updateTheme(id, payload) : studioService.createTheme(payload),
+    onSuccess: () => {
+      toast.success(editing ? (isMounted ? t.adminStudio.themeUpdatedSuccess : "Đã cập nhật theme") : (isMounted ? t.adminStudio.themeCreatedSuccess : "Đã tạo theme"));
+      setThemeOpen(false);
+      setEditing(null);
+      refresh();
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+  const remove = useMutation({
+    mutationFn: studioService.deleteTheme,
+    onSuccess: () => {
+      toast.success(isMounted ? t.adminStudio.themeDeletedSuccess : "Đã xóa theme");
+      setDeleting(null);
+      refresh();
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+  const saveProfile = useMutation({
+    mutationFn: (values: ProfileValues) =>
+      studioService.updateProfile({
+        username: values.username,
+        fullName: values.fullName || undefined,
+        bio: values.bio || null,
+        avatarUrl: values.avatarUrl || null,
+        bannerUrl: values.bannerUrl || null,
+        socialLinks: values.portfolioUrl ? { portfolio: values.portfolioUrl } : null,
+      }),
+    onSuccess: () => {
+      toast.success(isMounted ? t.adminStudio.profileUpdatedSuccess : "Đã cập nhật hồ sơ creator");
+      setProfileOpen(false);
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+  const apply = useMutation({
+    mutationFn: (values: ProfileValues) =>
+      studioService.apply({
+        username: values.username,
+        bio: values.bio || undefined,
+        socialLinks: values.portfolioUrl ? { portfolio: values.portfolioUrl } : undefined,
+      }),
+    onSuccess: () => {
+      toast.success(isMounted ? t.adminStudio.applySuccess : "Đã gửi đơn đăng ký creator");
+      setProfileOpen(false);
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+  const editTheme = (item: AdminKeyboard) => {
+    const categoryOptions = categories.data?.data ?? [];
+    setEditing({
+      ...item,
+      categories: categoryOptions.filter((category) => item.categoryNames.includes(category.name)).map((category) => ({ ...category, isActive: category.isActive })),
+    });
+    setThemeOpen(true);
+  };
+
   const maxDownloads = Math.max(...(stats.data?.recentDownloadsTrend.map((item) => item.downloads) ?? [1]), 1);
-  return <PermissionGate permission={PERMISSIONS.STUDIO_ACCESS} fallback={<AsyncState error />}><div className="space-y-6"><PageHeader icon={Palette} title="Creator Studio" description="Theo dõi tăng trưởng, quản lý theme và hoàn thiện hồ sơ sáng tạo." actions={<><Button variant="outline" onClick={() => setProfileOpen(true)}><Edit3 />Hồ sơ creator</Button><Button onClick={() => { setEditing(null); setThemeOpen(true); }}><Plus />Tạo theme</Button></>} />
-  <AsyncState loading={stats.isLoading} error={stats.isError} />{stats.data && <><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[{ label: "Theme", value: stats.data.totalThemes, icon: Palette }, { label: "Lượt tải", value: stats.data.totalDownloads, icon: Download }, { label: "Lượt thích", value: stats.data.totalLikes, icon: Heart }, { label: "Người theo dõi", value: stats.data.totalFollowers, icon: Users }].map(({ label, value, icon: Icon }) => <Card key={label}><CardContent className="flex items-center gap-4 pt-6 md:pt-8"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-kawaii-sky/30"><Icon className="h-5 w-5" /></div><div><p className="text-xs font-bold text-kawaii-mocha/55">{label}</p><p className="text-2xl font-black text-kawaii-mocha">{value}</p></div></CardContent></Card>)}</div><Card><CardContent className="pt-6 md:pt-8"><div className="mb-5 flex items-center gap-2"><BarChart3 className="h-5 w-5 text-kawaii-mocha" /><h2 className="font-black text-kawaii-mocha">Lượt tải gần đây</h2></div><div className="flex h-48 items-end gap-2 overflow-x-auto">{stats.data.recentDownloadsTrend.map((item) => <div key={item.date} className="flex min-w-10 flex-1 flex-col items-center gap-2"><span className="text-[10px] font-bold text-kawaii-mocha/55">{item.downloads}</span><div className="w-full rounded-t-2xl bg-kawaii-babyblue transition-all" style={{ height: `${Math.max((item.downloads / maxDownloads) * 140, 4)}px` }} /><span className="text-[9px] text-kawaii-mocha/45">{item.date.slice(5)}</span></div>)}</div></CardContent></Card></>}
-  <section className="space-y-3"><h2 className="text-lg font-black text-kawaii-mocha">Theme của tôi</h2><AsyncState loading={themes.isLoading} error={themes.isError} empty={!themes.isLoading && !themes.isError && !themes.data?.data.length} emptyText="Bạn chưa tạo theme nào" /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{themes.data?.data.map((item) => <Card key={item.id}><CardContent className="pt-6 md:pt-8"><div className="flex items-start justify-between"><div><h3 className="font-black text-kawaii-mocha">{item.name}</h3><p className="text-xs text-kawaii-mocha/55">/{item.slug}</p></div><Badge variant={item.status === "PUBLISHED" ? "default" : "secondary"}>{item.status}</Badge></div><p className="mt-4 text-xs text-kawaii-mocha/60">{item.downloadCount} lượt tải · {item.likeCount} lượt thích</p><div className="mt-5 flex justify-end gap-2"><Button variant="outline" size="sm" onClick={() => editTheme(item)}><Edit3 />Sửa</Button><Button variant="destructive" size="icon" onClick={() => setDeleting(item)} aria-label="Xóa"><Trash2 /></Button></div></CardContent></Card>)}</div></section>
-  <KeyboardFormDialog open={themeOpen} onOpenChange={(next) => { setThemeOpen(next); if (!next) setEditing(null); }} keyboard={editing} categories={categories.data?.data ?? []} busy={saveTheme.isPending} onSubmit={(payload) => saveTheme.mutateAsync({ payload, id: editing?.id }).then(() => undefined)} />
-  <Dialog open={profileOpen} onOpenChange={setProfileOpen}><DialogContent><DialogHeader><DialogTitle>Hồ sơ creator</DialogTitle><DialogDescription>Cập nhật hồ sơ nếu đã là creator, hoặc gửi đơn đăng ký lần đầu.</DialogDescription></DialogHeader><form className="space-y-4" onSubmit={profile.handleSubmit((values) => saveProfile.mutate(values))}><div className="grid gap-4 sm:grid-cols-2"><Field label="Username" error={profile.formState.errors.username?.message}><Input {...profile.register("username")} /></Field><Field label="Tên hiển thị"><Input {...profile.register("fullName")} /></Field></div><Field label="Giới thiệu"><Textarea {...profile.register("bio")} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Avatar URL" error={profile.formState.errors.avatarUrl?.message}><Input {...profile.register("avatarUrl")} /></Field><Field label="Banner URL" error={profile.formState.errors.bannerUrl?.message}><Input {...profile.register("bannerUrl")} /></Field></div><Field label="Portfolio URL" error={profile.formState.errors.portfolioUrl?.message}><Input {...profile.register("portfolioUrl")} /></Field><DialogFooter><Button type="button" variant="outline" disabled={apply.isPending} onClick={profile.handleSubmit((values) => apply.mutate(values))}>Gửi đơn creator</Button><Button type="submit" disabled={saveProfile.isPending}>{saveProfile.isPending ? "Đang lưu..." : "Lưu hồ sơ"}</Button></DialogFooter></form></DialogContent></Dialog>
-  <ConfirmDialog open={Boolean(deleting)} onOpenChange={(next) => !next && setDeleting(null)} title="Xóa theme?" description="Theme sẽ được xóa khỏi kho creator của bạn." busy={remove.isPending} onConfirm={() => deleting && remove.mutate(deleting.id)} />
-  </div></PermissionGate>;
+
+  return (
+    <PermissionGate permission={PERMISSIONS.STUDIO_ACCESS} fallback={<AsyncState error />}>
+      <div className="space-y-6">
+        <PageHeader
+          icon={Palette}
+          title={isMounted ? t.adminStudio.title : "Creator Studio"}
+          description={isMounted ? t.adminStudio.description : "Theo dõi tăng trưởng, quản lý theme và hoàn thiện hồ sơ sáng tạo."}
+          actions={
+            <>
+              <Button variant="outline" onClick={() => setProfileOpen(true)}>
+                <Edit3 />
+                {isMounted ? t.adminStudio.creatorProfileBtn : "Hồ sơ creator"}
+              </Button>
+              <Button
+                onClick={() => {
+                  setEditing(null);
+                  setThemeOpen(true);
+                }}
+              >
+                <Plus />
+                {isMounted ? t.adminStudio.createThemeBtn : "Tạo theme"}
+              </Button>
+            </>
+          }
+        />
+        <AsyncState loading={stats.isLoading} error={stats.isError} />
+        {stats.data && (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                { label: isMounted ? t.adminStudio.statThemes : "Theme", value: stats.data.totalThemes, icon: Palette },
+                { label: isMounted ? t.adminStudio.statDownloads : "Lượt tải", value: stats.data.totalDownloads, icon: Download },
+                { label: isMounted ? t.adminStudio.statLikes : "Lượt thích", value: stats.data.totalLikes, icon: Heart },
+                { label: isMounted ? t.adminStudio.statFollowers : "Người theo dõi", value: stats.data.totalFollowers, icon: Users },
+              ].map(({ label, value, icon: Icon }) => (
+                <Card key={label}>
+                  <CardContent className="flex items-center gap-4 pt-6 md:pt-8">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-kawaii-sky/30">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-kawaii-mocha/55">{label}</p>
+                      <p className="text-2xl font-black text-kawaii-mocha">{value}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <Card>
+              <CardContent className="pt-6 md:pt-8">
+                <div className="mb-5 flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-kawaii-mocha" />
+                  <h2 className="font-black text-kawaii-mocha">
+                    {isMounted ? t.adminStudio.recentDownloadsTitle : "Lượt tải gần đây"}
+                  </h2>
+                </div>
+                <div className="flex h-48 items-end gap-2 overflow-x-auto">
+                  {stats.data.recentDownloadsTrend.map((item) => (
+                    <div key={item.date} className="flex min-w-10 flex-1 flex-col items-center gap-2">
+                      <span className="text-[10px] font-bold text-kawaii-mocha/55">{item.downloads}</span>
+                      <div
+                        className="w-full rounded-t-2xl bg-kawaii-babyblue transition-all"
+                        style={{ height: `${Math.max((item.downloads / maxDownloads) * 140, 4)}px` }}
+                      />
+                      <span className="text-[9px] text-kawaii-mocha/45">{item.date.slice(5)}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+        <section className="space-y-3">
+          <h2 className="text-lg font-black text-kawaii-mocha">{isMounted ? t.adminStudio.myThemesTitle : "Theme của tôi"}</h2>
+          <AsyncState
+            loading={themes.isLoading}
+            error={themes.isError}
+            empty={!themes.isLoading && !themes.isError && !themes.data?.data.length}
+            emptyText={isMounted ? t.adminStudio.noThemes : "Bạn chưa tạo theme nào"}
+          />
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {themes.data?.data.map((item) => (
+              <Card key={item.id}>
+                <CardContent className="pt-6 md:pt-8">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-black text-kawaii-mocha">{item.name}</h3>
+                      <p className="text-xs text-kawaii-mocha/55">/{item.slug}</p>
+                    </div>
+                    <Badge variant={item.status === "PUBLISHED" ? "default" : "secondary"}>{item.status}</Badge>
+                  </div>
+                  <p className="mt-4 text-xs text-kawaii-mocha/60">
+                    {item.downloadCount} {isMounted ? t.adminStudio.statDownloads.toLowerCase() : "lượt tải"} · {item.likeCount} {isMounted ? t.adminStudio.statLikes.toLowerCase() : "lượt thích"}
+                  </p>
+                  <div className="mt-5 flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => editTheme(item)}>
+                      <Edit3 />
+                      {isMounted ? t.adminUi.edit : "Sửa"}
+                    </Button>
+                    <Button variant="destructive" size="icon" onClick={() => setDeleting(item)} aria-label={isMounted ? t.adminUi.delete : "Xóa"}>
+                      <Trash2 />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+        <KeyboardFormDialog
+          open={themeOpen}
+          onOpenChange={(next) => {
+            setThemeOpen(next);
+            if (!next) setEditing(null);
+          }}
+          keyboard={editing}
+          categories={categories.data?.data ?? []}
+          busy={saveTheme.isPending}
+          onSubmit={(payload) => saveTheme.mutateAsync({ payload, id: editing?.id }).then(() => undefined)}
+        />
+        <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-kawaii-mocha">
+                {isMounted ? t.adminStudio.creatorProfileTitle : "Hồ sơ creator"}
+              </DialogTitle>
+              <DialogDescription>
+                {isMounted ? t.adminStudio.creatorProfileDesc : "Cập nhật hồ sơ nếu đã là creator, hoặc gửi đơn đăng ký lần đầu."}
+              </DialogDescription>
+            </DialogHeader>
+            <form className="space-y-4" onSubmit={profile.handleSubmit((values) => saveProfile.mutate(values))}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Username" error={profile.formState.errors.username?.message}>
+                  <Input {...profile.register("username")} />
+                </Field>
+                <Field label={isMounted ? t.adminStudio.displayNameLabel : "Tên hiển thị"}>
+                  <Input {...profile.register("fullName")} />
+                </Field>
+              </div>
+              <Field label={isMounted ? t.adminStudio.bioLabel : "Giới thiệu"}>
+                <Textarea {...profile.register("bio")} />
+              </Field>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Avatar URL" error={profile.formState.errors.avatarUrl?.message}>
+                  <Input {...profile.register("avatarUrl")} />
+                </Field>
+                <Field label="Banner URL" error={profile.formState.errors.bannerUrl?.message}>
+                  <Input {...profile.register("bannerUrl")} />
+                </Field>
+              </div>
+              <Field label="Portfolio URL" error={profile.formState.errors.portfolioUrl?.message}>
+                <Input {...profile.register("portfolioUrl")} />
+              </Field>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={apply.isPending}
+                  onClick={profile.handleSubmit((values) => apply.mutate(values))}
+                >
+                  {apply.isPending
+                    ? (isMounted ? t.adminUi.processing : "Đang xử lý...")
+                    : (isMounted ? t.adminStudio.applyCreatorBtn : "Gửi đơn creator")}
+                </Button>
+                <Button type="submit" disabled={saveProfile.isPending}>
+                  {saveProfile.isPending
+                    ? (isMounted ? t.adminUi.saving : "Đang lưu...")
+                    : (isMounted ? t.adminStudio.saveProfileBtn : "Lưu hồ sơ")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+        <ConfirmDialog
+          open={Boolean(deleting)}
+          onOpenChange={(next) => !next && setDeleting(null)}
+          title={isMounted ? t.adminStudio.deleteThemeTitle : "Xóa theme?"}
+          description={isMounted ? t.adminStudio.deleteThemeDesc : "Theme sẽ được xóa khỏi kho creator của bạn."}
+          busy={remove.isPending}
+          onConfirm={() => deleting && remove.mutate(deleting.id)}
+        />
+      </div>
+    </PermissionGate>
+  );
 }
+

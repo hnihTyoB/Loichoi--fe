@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { authService } from "@/services/auth.service";
 import { useTranslation } from "@/hooks/use-translation";
 
@@ -99,8 +100,7 @@ export default function RegisterPage() {
             <label className="text-xs font-bold text-kawaii-mocha ml-1">
               {isMounted ? t.auth.password : "Mật khẩu bảo mật"}
             </label>
-            <Input
-              type="password"
+            <PasswordInput
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
