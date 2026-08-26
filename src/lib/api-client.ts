@@ -41,9 +41,12 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     // Ignore refresh loop on auth endpoints
-    const isAuthEndpoint = originalRequest?.url?.includes("/auth/login") ||
+    const isAuthEndpoint =
+      originalRequest?.url?.includes("/auth/login") ||
       originalRequest?.url?.includes("/auth/refresh") ||
-      originalRequest?.url?.includes("/auth/register");
+      originalRequest?.url?.includes("/auth/register") ||
+      originalRequest?.url?.includes("/auth/me") ||
+      originalRequest?.url?.includes("/auth/logout");
 
     if (error.response?.status === 401 && !originalRequest?._retry && !isAuthEndpoint) {
       if (isRefreshing) {
@@ -69,7 +72,18 @@ apiClient.interceptors.response.use(
         processQueue(refreshError);
         if (typeof window !== "undefined") {
           const currentPath = window.location.pathname;
-          if (!currentPath.startsWith("/login") && !currentPath.startsWith("/register")) {
+          const isPublicPath =
+            currentPath === "/" ||
+            currentPath.startsWith("/login") ||
+            currentPath.startsWith("/register") ||
+            currentPath.startsWith("/forgot-password") ||
+            currentPath.startsWith("/reset-password") ||
+            currentPath.startsWith("/callback") ||
+            currentPath === "/trending" ||
+            (currentPath === "/keyboards" || (currentPath.startsWith("/keyboards/") && !currentPath.startsWith("/keyboards/manage"))) ||
+            (currentPath === "/categories" || (currentPath.startsWith("/categories/") && !currentPath.startsWith("/categories/manage")));
+
+          if (!isPublicPath) {
             window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
           }
         }

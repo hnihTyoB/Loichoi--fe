@@ -5,11 +5,13 @@ export interface User {
   fullName?: string | null;
   avatarUrl?: string | null;
   roleId: string;
-  role?: {
-    id: string;
-    name: string;
-    description?: string;
-  };
+  role?:
+    | string
+    | {
+        id?: string;
+        name: string;
+        description?: string;
+      };
   permissions: string[];
   isActive: boolean;
   isEmailVerified: boolean;

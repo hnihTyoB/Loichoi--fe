@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar,
+  Camera,
   CheckCircle2,
   Copy,
   ExternalLink,
   KeyRound,
   Laptop,
+  LoaderCircle,
   Lock,
   LogOut,
   MessageSquare,
@@ -26,7 +28,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AvatarCropDialog } from "@/components/forms/avatar-crop-dialog";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthStore } from "@/stores/auth-store";
 import { useTranslation } from "@/hooks/use-translation";
 import { formatDate } from "@/lib/utils";
 import { authService } from "@/services/auth.service";
@@ -40,6 +44,11 @@ export default function ProfilePage() {
   const [fullName, setFullName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Password Form State
   const [oldPassword, setOldPassword] = useState("");
@@ -60,6 +69,56 @@ export default function ProfilePage() {
     queryFn: () => authService.getSessions(),
     retry: 1,
   });
+
+  // Avatar file selection -> Open Crop Dialog
+  const handleAvatarFileSelected = (file: File) => {
+    if (!file) return;
+
+    const validTypes = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Định dạng ảnh không hợp lệ! Vui lòng chọn PNG, JPG, WEBP hoặc GIF.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Kích thước ảnh tối đa là 5MB!");
+      return;
+    }
+
+    setCropFile(file);
+    setIsCropOpen(true);
+  };
+
+  // Process and upload cropped avatar
+  const handleCroppedAvatarUpload = async (croppedFile: File) => {
+    setIsUploadingAvatar(true);
+    try {
+      const newAvatar = await authService.uploadAvatar(croppedFile);
+      setAvatarUrl(newAvatar);
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser) {
+        useAuthStore.getState().setUser({
+          ...currentUser,
+          avatarUrl: newAvatar,
+        });
+      }
+      await refetch();
+      toast.success(isMounted ? t.profile.avatarUploadSuccess : "Đã cập nhật ảnh đại diện thành công");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Tải ảnh đại diện thất bại";
+      toast.error(msg);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleAvatarFileSelected(file);
+    }
+    e.target.value = "";
+  };
 
   // Mutation: Update Profile
   const updateProfileMutation = useMutation({
@@ -151,6 +210,23 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-8">
+      {/* Interactive Avatar Crop & Alignment Dialog */}
+      <AvatarCropDialog
+        open={isCropOpen}
+        imageFile={cropFile}
+        onOpenChange={setIsCropOpen}
+        onCropComplete={handleCroppedAvatarUpload}
+      />
+
+      {/* Hidden file input for avatar upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="hidden"
+        onChange={onFileInputChange}
+      />
+
       {/* Header Banner */}
       <div className="rounded-[2.5rem] border-2 border-kawaii-sky/80 bg-gradient-to-r from-kawaii-cloud via-card to-kawaii-blush/40 p-6 md:p-8 shadow-cloud flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-2 text-center md:text-left">
@@ -168,7 +244,7 @@ export default function ProfilePage() {
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary" className="px-3.5 py-1.5 text-xs font-bold rounded-full border border-kawaii-sky/40">
             <Shield className="mr-1 h-3.5 w-3.5 text-kawaii-warmbrown" />
-            {user?.role?.name || "Member"}
+            {typeof user?.role === "string" ? user.role : user?.role?.name || "USER"}
           </Badge>
           <Badge variant="default" className="px-3.5 py-1.5 text-xs font-bold rounded-full bg-emerald-500/15 text-emerald-700 border border-emerald-500/30">
             <CheckCircle2 className="mr-1 h-3.5 w-3.5 text-emerald-600" />
@@ -182,13 +258,62 @@ export default function ProfilePage() {
         {/* Left Column: Member Card (4 cols) */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="rounded-[2.25rem] border-2 border-kawaii-sky/60 shadow-cloud text-center p-6 space-y-5">
-            <div className="relative mx-auto h-28 w-28 rounded-full bg-kawaii-sky/40 border-4 border-kawaii-sky text-kawaii-mocha shadow-cloud overflow-hidden flex items-center justify-center">
-              {user?.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.avatarUrl} alt={user.fullName || user.email} className="h-full w-full object-cover" />
-              ) : (
-                <UserIcon className="h-14 w-14 text-kawaii-mocha" />
-              )}
+            {/* Avatar container with interactive upload button & hover overlay */}
+            <div className="relative mx-auto h-32 w-32 group">
+              <div className="h-full w-full rounded-full bg-kawaii-sky/40 border-4 border-kawaii-sky text-kawaii-mocha shadow-cloud overflow-hidden flex items-center justify-center relative">
+                {avatarUrl || user?.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={avatarUrl || user?.avatarUrl || ""}
+                    alt={user?.fullName || user?.email}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <UserIcon className="h-16 w-16 text-kawaii-mocha" />
+                )}
+
+                {/* Uploading Spinner Overlay */}
+                {isUploadingAvatar && (
+                  <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-1">
+                    <LoaderCircle className="h-6 w-6 text-kawaii-warmbrown animate-spin" />
+                    <span className="text-[10px] font-bold text-kawaii-mocha">
+                      {isMounted ? t.profile.uploadingAvatar : "Đang tải..."}
+                    </span>
+                  </div>
+                )}
+
+                {/* Hover Camera Overlay */}
+                {!isUploadingAvatar && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    aria-label={isMounted ? t.profile.changeAvatar : "Đổi ảnh đại diện"}
+                    title={isMounted ? t.profile.changeAvatar : "Đổi ảnh đại diện"}
+                    className="absolute inset-0 bg-kawaii-mocha/50 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center text-white cursor-pointer"
+                  >
+                    <Camera className="h-6 w-6 mb-1 text-kawaii-cream" />
+                    <span className="text-[11px] font-bold text-kawaii-cream">
+                      {isMounted ? t.profile.changeAvatar : "Đổi ảnh"}
+                    </span>
+                  </button>
+                )}
+              </div>
+
+              {/* Little Camera Badge Button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingAvatar}
+                aria-label={isMounted ? t.profile.uploadAvatarBtn : "Tải ảnh đại diện"}
+                title={isMounted ? t.profile.uploadAvatarBtn : "Tải ảnh đại diện"}
+                className="absolute bottom-0 right-0 h-9 w-9 rounded-full bg-card border-2 border-kawaii-sky shadow-cloud flex items-center justify-center text-kawaii-mocha hover:bg-kawaii-sky/40 transition-transform active:scale-95 bouncy-hover"
+              >
+                {isUploadingAvatar ? (
+                  <LoaderCircle className="h-4 w-4 text-kawaii-warmbrown animate-spin" />
+                ) : (
+                  <Camera className="h-4 w-4 text-kawaii-mocha" />
+                )}
+              </button>
             </div>
 
             <div>
@@ -200,9 +325,9 @@ export default function ProfilePage() {
 
             <div className="flex flex-wrap justify-center gap-2 pt-1">
               <Badge variant="outline" className="px-3 py-1 text-xs font-bold border-kawaii-sky/60 bg-kawaii-cloud/30">
-                {user?.role?.name || "Member"}
+                {typeof user?.role === "string" ? user.role : user?.role?.name || "USER"}
               </Badge>
-              {user?.isEmailVerified ? (
+              {user?.isEmailVerified || user?.isActive ? (
                 <Badge variant="default" className="gap-1 px-3 py-1 text-xs font-bold bg-emerald-100 text-emerald-800 border-emerald-300">
                   <CheckCircle2 className="h-3 w-3" />
                   <span>{isMounted ? t.profile.verifiedBadge : "Đã xác thực"}</span>
@@ -215,7 +340,7 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Quick Metadata Stats */}
+              {/* Quick Metadata Stats */}
             <div className="rounded-2xl border border-kawaii-sky/40 bg-kawaii-cloud/30 p-4 text-left space-y-3 text-xs">
               <div className="flex items-center justify-between border-b border-kawaii-sky/20 pb-2">
                 <span className="font-bold text-kawaii-mocha/70 flex items-center gap-1.5">
@@ -350,18 +475,6 @@ export default function ProfilePage() {
                           className="rounded-2xl border-2 border-kawaii-sky/50 focus:border-kawaii-sky text-xs"
                         />
                       </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-kawaii-mocha ml-1">
-                        {isMounted ? t.profile.avatarUrl : "URL ảnh đại diện"}
-                      </label>
-                      <Input
-                        value={avatarUrl}
-                        onChange={(e) => setAvatarUrl(e.target.value)}
-                        placeholder={isMounted ? t.profile.avatarUrlPlaceholder : "https://example.com/avatar.png"}
-                        className="rounded-2xl border-2 border-kawaii-sky/50 focus:border-kawaii-sky text-xs"
-                      />
                     </div>
 
                     <div className="pt-2 flex justify-end">
@@ -558,7 +671,7 @@ export default function ProfilePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {user?.role?.description && (
+                  {typeof user?.role === "object" && user?.role?.description && (
                     <div className="rounded-2xl border border-kawaii-sky/40 bg-kawaii-cloud/30 p-3.5 text-xs text-kawaii-mocha/80">
                       <span className="font-bold text-kawaii-mocha mr-1">Mô tả vai trò ({user.role.name}):</span>
                       {user.role.description}

@@ -165,7 +165,7 @@ export default function UsersPage() {
                         <p className="text-xs text-kawaii-mocha/55">{user.email}</p>
                       </td>
                       <td className="p-3">
-                        <Badge variant="secondary">{user.role?.name || (isMounted ? t.adminUsers.unassigned : "Chưa gán")}</Badge>
+                        <Badge variant="secondary">{typeof user.role === "string" ? user.role : user.role?.name || (isMounted ? t.adminUsers.unassigned : "Chưa gán")}</Badge>
                       </td>
                       <td className="p-3">
                         <Badge variant={user.isActive ? "default" : "destructive"}>

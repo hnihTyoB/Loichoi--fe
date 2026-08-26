@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ClipboardList, Eye, Search } from "lucide-react";
-import { AsyncState, PageHeader } from "@/components/shared/admin-ui";
+import { AsyncState, PageHeader, PaginationNav } from "@/components/shared/admin-ui";
 import { PermissionGate } from "@/components/shared/permission-gate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,16 +60,18 @@ export default function AuditLogsPage() {
   const [action, setAction] = useState("");
   const [targetType, setTargetType] = useState("");
   const [actorId, setActorId] = useState("");
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<AuditLog | null>(null);
 
   const logs = useQuery({
-    queryKey: ["audit-logs", action, targetType, actorId],
+    queryKey: ["audit-logs", action, targetType, actorId, page],
     queryFn: () =>
       systemService.getAuditLogs({
         action: action || undefined,
         targetType: targetType || undefined,
         actorId: actorId || undefined,
-        limit: 100,
+        page,
+        limit: 20,
       }),
   });
 
@@ -92,18 +94,27 @@ export default function AuditLogsPage() {
               <Input
                 className="pl-10"
                 value={action}
-                onChange={(event) => setAction(event.target.value)}
+                onChange={(event) => {
+                  setAction(event.target.value);
+                  setPage(1);
+                }}
                 placeholder={isMounted ? t.adminAuditLogs.filterByAction : "Lọc theo action..."}
               />
             </label>
             <Input
               value={targetType}
-              onChange={(event) => setTargetType(event.target.value)}
+              onChange={(event) => {
+                setTargetType(event.target.value);
+                setPage(1);
+              }}
               placeholder={isMounted ? t.adminAuditLogs.targetTypePlaceholder : "Loại đối tượng..."}
             />
             <Input
               value={actorId}
-              onChange={(event) => setActorId(event.target.value)}
+              onChange={(event) => {
+                setActorId(event.target.value);
+                setPage(1);
+              }}
               placeholder={isMounted ? t.adminAuditLogs.actorPlaceholder : "Email hoặc ID người thực hiện..."}
             />
           </CardContent>
@@ -116,7 +127,7 @@ export default function AuditLogsPage() {
         />
         {logs.data?.data.length ? (
           <Card>
-            <CardContent className="overflow-x-auto pt-6 md:pt-8">
+            <CardContent className="overflow-x-auto pt-6 md:pt-8 space-y-4">
               <table className="w-full min-w-[900px] text-left text-sm">
                 <thead>
                   <tr className="border-b-2 border-kawaii-sky/40 text-xs text-kawaii-mocha/65">
@@ -165,6 +176,15 @@ export default function AuditLogsPage() {
                   })}
                 </tbody>
               </table>
+
+              {/* Pagination */}
+              <PaginationNav
+                page={page}
+                totalPages={logs.data.meta?.totalPages ?? 1}
+                total={logs.data.meta?.total}
+                limit={20}
+                onPageChange={setPage}
+              />
             </CardContent>
           </Card>
         ) : null}

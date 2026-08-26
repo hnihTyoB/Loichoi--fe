@@ -129,3 +129,69 @@ export function ConfirmDialog({
   );
 }
 
+export function PaginationNav({
+  page,
+  totalPages,
+  total,
+  limit = 20,
+  onPageChange,
+  className,
+}: {
+  page: number;
+  totalPages: number;
+  total?: number;
+  limit?: number;
+  onPageChange: (page: number) => void;
+  className?: string;
+}) {
+  const { t, isMounted } = useTranslation();
+  if (totalPages <= 1 && !total) return null;
+
+  const start = total ? Math.min((page - 1) * limit + 1, total) : 0;
+  const end = total ? Math.min(page * limit, total) : 0;
+
+  return (
+    <div className={cn("flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 px-1", className)}>
+      <p className="text-xs font-semibold text-kawaii-mocha/70">
+        {total !== undefined ? (
+          <>
+            {isMounted ? "Hiển thị" : "Showing"}{" "}
+            <span className="font-bold text-kawaii-mocha">{total > 0 ? `${start} - ${end}` : 0}</span>{" "}
+            {isMounted ? "trong tổng số" : "of"}{" "}
+            <span className="font-bold text-kawaii-mocha">{total}</span>{" "}
+            {isMounted ? "kết quả" : "results"}
+          </>
+        ) : null}
+      </p>
+
+      {totalPages > 1 && (
+        <nav className="flex items-center gap-2" aria-label="Pagination">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => onPageChange(page - 1)}
+            className="h-8 rounded-xl border-kawaii-sky/50 text-xs font-bold gap-1 text-kawaii-mocha hover:bg-kawaii-sky/30 bouncy-hover"
+          >
+            <span>{isMounted ? t.common.previous : "Trước"}</span>
+          </Button>
+          <span className="rounded-xl bg-kawaii-cloud/70 border border-kawaii-sky/40 px-3 py-1 text-xs font-bold text-kawaii-mocha">
+            {page} / {totalPages}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages}
+            onClick={() => onPageChange(page + 1)}
+            className="h-8 rounded-xl border-kawaii-sky/50 text-xs font-bold gap-1 text-kawaii-mocha hover:bg-kawaii-sky/30 bouncy-hover"
+          >
+            <span>{isMounted ? t.common.next : "Sau"}</span>
+          </Button>
+        </nav>
+      )}
+    </div>
+  );
+}
+

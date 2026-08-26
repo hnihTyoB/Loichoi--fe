@@ -25,7 +25,7 @@ export function useAuth() {
   return {
     user: query.data || user,
     isAuthenticated: !!query.data || isAuthenticated,
-    isLoading: query.isLoading && isLoading,
+    isLoading: query.isLoading || isLoading,
     refetch: query.refetch,
   };
 }

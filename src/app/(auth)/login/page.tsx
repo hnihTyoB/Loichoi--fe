@@ -27,7 +27,8 @@ export default function LoginPage() {
   const { t, isMounted } = useTranslation();
 
   const getSafeReturnPath = () => {
-    const next = new URLSearchParams(window.location.search).get("next");
+    const searchParams = new URLSearchParams(window.location.search);
+    const next = searchParams.get("next") || searchParams.get("redirect");
     return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
   };
 

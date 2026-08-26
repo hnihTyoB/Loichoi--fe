@@ -69,7 +69,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
                 {isMounted ? t.common.role : "Vai Trò"}
               </label>
               <div>
-                <Badge variant="secondary">{user?.role?.name || "Member"}</Badge>
+                <Badge variant="secondary">{typeof user?.role === "string" ? user.role : user?.role?.name || "USER"}</Badge>
               </div>
             </div>
             <div className="space-y-1">

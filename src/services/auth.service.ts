@@ -36,6 +36,42 @@ export const authService = {
     await apiClient.put("/auth/profile", payload);
   },
 
+  async getAvatarUploadUrl(contentType: string): Promise<{ uploadUrl: string; publicUrl: string; key: string; expiresIn: number }> {
+    const res = await apiClient.post<ApiResponse<{ uploadUrl: string; publicUrl: string; key: string; expiresIn: number }>>("/auth/avatar/upload-url", {
+      contentType,
+    });
+    return res.data.data;
+  },
+
+  async confirmAvatarUpload(key: string): Promise<{ avatarUrl: string }> {
+    const res = await apiClient.post<ApiResponse<{ avatarUrl: string }>>("/auth/avatar/confirm", {
+      key,
+    });
+    return res.data.data;
+  },
+
+  async uploadAvatar(file: File): Promise<string> {
+    // 1. Request presigned upload URL from BE
+    const { uploadUrl, key } = await this.getAvatarUploadUrl(file.type);
+
+    // 2. Direct PUT binary file to presigned URL (S3 / R2 storage)
+    const uploadRes = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": file.type,
+      },
+      body: file,
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error("Không thể tải ảnh lên bộ nhớ đám mây");
+    }
+
+    // 3. Confirm upload key with backend
+    const result = await this.confirmAvatarUpload(key);
+    return result.avatarUrl;
+  },
+
   async updatePassword(payload: { oldPassword?: string; newPassword: string }): Promise<void> {
     await apiClient.put("/auth/password", payload);
   },

@@ -7,7 +7,7 @@ import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, CheckCheck, Edit3, Eye, Mail, Plus, RefreshCcw, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { AsyncState, ConfirmDialog, Field, PageHeader, selectClassName } from "@/components/shared/admin-ui";
+import { AsyncState, ConfirmDialog, Field, PageHeader, PaginationNav, selectClassName } from "@/components/shared/admin-ui";
 import { PermissionGate } from "@/components/shared/permission-gate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,24 +29,31 @@ const broadcastSchema = z.object({
   content: z.string().min(3).max(2000),
   type: z.string(),
   priority: z.string(),
-  actionUrl: z.string().refine((value) => !value || z.string().url().safeParse(value).success, "URL không hợp lệ"),
+  actionUrl: z.string().optional().or(z.literal("")),
 });
 const templateSchema = z.object({
-  code: z.string().min(2).max(100).regex(/^[A-Z0-9_]+$/, "Dùng chữ hoa, số và gạch dưới"),
-  name: z.string().min(2).max(150),
-  description: z.string(),
+  code: z.string().min(2).max(100),
+  name: z.string().min(1).max(255),
+  description: z.string().optional().or(z.literal("")),
   channels: z.string().min(1),
-  subject: z.string(),
-  title: z.string(),
+  subject: z.string().optional().or(z.literal("")),
+  title: z.string().optional().or(z.literal("")),
   content: z.string().min(1),
-  variables: z.string(),
+  variables: z.string().optional().or(z.literal("")),
   isActive: z.boolean(),
 });
 type BroadcastValues = z.infer<typeof broadcastSchema>;
 type TemplateValues = z.infer<typeof templateSchema>;
-const list = (value: string) =>
+
+const parseChannels = (value: string) =>
   value
-    .split(/[,\n]/)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const parseVariablesList = (value?: string) =>
+  (value || "")
+    .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
 
@@ -59,6 +66,9 @@ export default function NotificationsPage() {
   const [editing, setEditing] = useState<NotificationTemplate | null>(null);
   const [deletingTemplate, setDeletingTemplate] = useState<NotificationTemplate | null>(null);
   const [emailStatus, setEmailStatus] = useState("");
+  const [notifPage, setNotifPage] = useState(1);
+  const [emailPage, setEmailPage] = useState(1);
+  const [templatePage, setTemplatePage] = useState(1);
   const [preview, setPreview] = useState<{ title?: string | null; subject?: string | null; content: string; html?: string } | null>(null);
   const [variables, setVariables] = useState("{}");
   const [testEmail, setTestEmail] = useState("");
@@ -83,17 +93,17 @@ export default function NotificationsPage() {
   });
 
   const notifications = useQuery({
-    queryKey: ["notifications", "list"],
-    queryFn: () => notificationService.getNotifications({ limit: 100 }),
+    queryKey: ["notifications", "list", notifPage],
+    queryFn: () => notificationService.getNotifications({ page: notifPage, limit: 20 }),
   });
   const emails = useQuery({
-    queryKey: ["notifications", "emails", emailStatus],
-    queryFn: () => notificationService.getEmails({ status: emailStatus || undefined, limit: 100 }),
+    queryKey: ["notifications", "emails", emailStatus, emailPage],
+    queryFn: () => notificationService.getEmails({ status: emailStatus || undefined, page: emailPage, limit: 20 }),
     enabled: hasPermission(PERMISSIONS.NOTIFICATION_READ),
   });
   const templates = useQuery({
-    queryKey: ["notifications", "templates"],
-    queryFn: () => notificationService.getTemplates({ limit: 100 }),
+    queryKey: ["notifications", "templates", templatePage],
+    queryFn: () => notificationService.getTemplates({ page: templatePage, limit: 20 }),
     enabled: hasPermission(PERMISSIONS.NOTIFICATION_TEMPLATE_READ),
   });
 
@@ -134,11 +144,11 @@ export default function NotificationsPage() {
         code: values.code,
         name: values.name,
         description: values.description || undefined,
-        channels: list(values.channels),
+        channels: parseChannels(values.channels),
         subject: values.subject || undefined,
         title: values.title || undefined,
         content: values.content,
-        variables: list(values.variables),
+        variables: parseVariablesList(values.variables),
         isActive: values.isActive,
       };
       return editing ? notificationService.updateTemplate(editing.id, payload) : notificationService.createTemplate(payload);
@@ -275,12 +285,28 @@ export default function NotificationsPage() {
                 </CardContent>
               </Card>
             ))}
+
+            {/* Pagination for Inbox */}
+            <PaginationNav
+              page={notifPage}
+              totalPages={notifications.data?.meta?.totalPages ?? 1}
+              total={notifications.data?.meta?.total}
+              limit={20}
+              onPageChange={setNotifPage}
+            />
           </div>
         </TabsContent>
         <TabsContent value="emails">
           <PermissionGate permission={PERMISSIONS.NOTIFICATION_READ} fallback={<AsyncState error />}>
             <div className="space-y-4">
-              <select className={`${selectClassName} max-w-xs`} value={emailStatus} onChange={(event) => setEmailStatus(event.target.value)}>
+              <select
+                className={`${selectClassName} max-w-xs`}
+                value={emailStatus}
+                onChange={(event) => {
+                  setEmailStatus(event.target.value);
+                  setEmailPage(1);
+                }}
+              >
                 <option value="">{isMounted ? t.adminNotifications.allStatuses : "Mọi trạng thái"}</option>
                 <option value="PENDING">{isMounted ? t.adminNotifications.statusPending : "Đang chờ"}</option>
                 <option value="SENT">{isMounted ? t.adminNotifications.statusSent : "Đã gửi"}</option>
@@ -319,6 +345,15 @@ export default function NotificationsPage() {
                   </CardContent>
                 </Card>
               ))}
+
+              {/* Pagination for Emails */}
+              <PaginationNav
+                page={emailPage}
+                totalPages={emails.data?.meta?.totalPages ?? 1}
+                total={emails.data?.meta?.total}
+                limit={20}
+                onPageChange={setEmailPage}
+              />
             </div>
           </PermissionGate>
         </TabsContent>
@@ -390,6 +425,15 @@ export default function NotificationsPage() {
                   </Card>
                 ))}
               </div>
+
+              {/* Pagination for Templates */}
+              <PaginationNav
+                page={templatePage}
+                totalPages={templates.data?.meta?.totalPages ?? 1}
+                total={templates.data?.meta?.total}
+                limit={20}
+                onPageChange={setTemplatePage}
+              />
             </div>
           </PermissionGate>
         </TabsContent>
