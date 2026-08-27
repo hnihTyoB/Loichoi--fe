@@ -31,7 +31,7 @@ function FacebookIcon({ className }: { className?: string }) {
 
 const socialLinks = [
   {
-    name: "Discord Server",
+    name: "Discord",
     href: process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discord.gg/DVu3TTv3",
     icon: DiscordIcon,
     iconColor: "text-[#5865F2]",
@@ -52,7 +52,7 @@ const socialLinks = [
     subtext: "Huỳnh Cao Gia Hân",
   },
   {
-    name: "Developer",
+    name: "Facebook",
     href: "https://www.facebook.com/cl1rtl1jzl1",
     icon: FacebookIcon,
     iconColor: "text-[#1877F2]",

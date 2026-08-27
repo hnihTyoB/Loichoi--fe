@@ -336,10 +336,10 @@ export default function ProfilePage() {
               <Badge variant="outline" className="px-3 py-1 text-xs font-bold border-kawaii-sky/60 bg-kawaii-cloud/30">
                 {typeof user?.role === "string" ? user.role : user?.role?.name || "USER"}
               </Badge>
-              {user?.isEmailVerified || user?.isActive ? (
+              {user?.discordId ? (
                 <Badge variant="default" className="gap-1 px-3 py-1 text-xs font-bold bg-emerald-100 text-emerald-800 border-emerald-300">
                   <CheckCircle2 className="h-3 w-3" />
-                  <span>{isMounted ? t.profile.verifiedBadge : "Đã xác thực"}</span>
+                  <span>{isMounted ? t.profile.verifiedBadge : "Đã xác thực Discord"}</span>
                 </Badge>
               ) : (
                 <Badge variant="secondary" className="gap-1 px-3 py-1 text-xs font-bold text-amber-700 bg-amber-100 border-amber-300">
@@ -714,4 +714,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

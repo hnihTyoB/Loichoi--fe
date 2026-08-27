@@ -99,7 +99,7 @@ export default function NotificationsPage() {
   const emails = useQuery({
     queryKey: ["notifications", "emails", emailStatus, emailPage],
     queryFn: () => notificationService.getEmails({ status: emailStatus || undefined, page: emailPage, limit: 20 }),
-    enabled: hasPermission(PERMISSIONS.NOTIFICATION_READ),
+    enabled: hasPermission(PERMISSIONS.NOTIFICATION_UPDATE),
   });
   const templates = useQuery({
     queryKey: ["notifications", "templates", templatePage],
@@ -250,8 +250,12 @@ export default function NotificationsPage() {
       <Tabs defaultValue="inbox">
         <TabsList className="flex-wrap">
           <TabsTrigger value="inbox">{isMounted ? t.adminNotifications.tabInbox : "Hộp thư"}</TabsTrigger>
-          <TabsTrigger value="emails">{isMounted ? t.adminNotifications.tabEmailQueue : "Email queue"}</TabsTrigger>
-          <TabsTrigger value="templates">{isMounted ? t.adminNotifications.tabTemplates : "Templates"}</TabsTrigger>
+          {hasPermission(PERMISSIONS.NOTIFICATION_UPDATE) ? (
+            <TabsTrigger value="emails">{isMounted ? t.adminNotifications.tabEmailQueue : "Email queue"}</TabsTrigger>
+          ) : null}
+          {hasPermission(PERMISSIONS.NOTIFICATION_TEMPLATE_READ) ? (
+            <TabsTrigger value="templates">{isMounted ? t.adminNotifications.tabTemplates : "Templates"}</TabsTrigger>
+          ) : null}
         </TabsList>
         <TabsContent value="inbox">
           <div className="space-y-4">
@@ -297,7 +301,7 @@ export default function NotificationsPage() {
           </div>
         </TabsContent>
         <TabsContent value="emails">
-          <PermissionGate permission={PERMISSIONS.NOTIFICATION_READ} fallback={<AsyncState error />}>
+          <PermissionGate permission={PERMISSIONS.NOTIFICATION_UPDATE} fallback={<AsyncState error />}>
             <div className="space-y-4">
               <select
                 className={`${selectClassName} max-w-xs`}
@@ -322,8 +326,8 @@ export default function NotificationsPage() {
                 <Card key={item.id}>
                   <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between md:pt-8">
                     <div>
-                      <div className="flex gap-2">
-                        <Mail className="h-4 w-4 text-kawaii-mocha" />
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 shrink-0 text-kawaii-mocha" />
                         <h2 className="font-bold text-kawaii-mocha">{item.subject}</h2>
                         <Badge variant={item.status === "SENT" ? "default" : item.status === "FAILED" ? "destructive" : "secondary"}>
                           {item.status}
@@ -577,4 +581,3 @@ export default function NotificationsPage() {
     </div>
   );
 }
-

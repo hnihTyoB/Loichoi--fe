@@ -23,6 +23,7 @@ import { BrandLogo } from "./brand-logo";
 import { PermissionGate } from "./permission-gate";
 import { useTranslation } from "@/hooks/use-translation";
 import { PERMISSIONS } from "@/lib/constants";
+import { DASHBOARD_ACCESS_PERMISSIONS, SETTINGS_ACCESS_PERMISSIONS } from "@/lib/dashboard-access";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/stores/ui-store";
 import type { TranslationKeys } from "@/lib/i18n";
@@ -33,13 +34,14 @@ interface NavItemConfig {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   permission?: string;
+  permissions?: string[];
   key: NavKey;
   fallbackVi: string;
   fallbackEn: string;
 }
 
 const navItems: NavItemConfig[] = [
-  { href: "/dashboard", icon: Home, key: "dashboard", fallbackVi: "Tổng quan", fallbackEn: "Dashboard" },
+  { href: "/dashboard", icon: Home, permissions: DASHBOARD_ACCESS_PERMISSIONS, key: "dashboard", fallbackVi: "Tổng quan", fallbackEn: "Dashboard" },
   { href: "/keyboards/manage", icon: Palette, permission: PERMISSIONS.KEYBOARD_READ, key: "keyboardsManage", fallbackVi: "Quản trị theme", fallbackEn: "Theme Management" },
   { href: "/categories/manage", icon: FolderTree, permission: PERMISSIONS.CATEGORY_READ, key: "categoriesManage", fallbackVi: "Quản trị danh mục", fallbackEn: "Category Management" },
   { href: "/colors/manage", icon: Palette, permission: PERMISSIONS.COLOR_READ, key: "colorsManage", fallbackVi: "Quản trị màu sắc", fallbackEn: "Color Management" },
@@ -48,13 +50,20 @@ const navItems: NavItemConfig[] = [
   { href: "/users", icon: Users, permission: PERMISSIONS.USER_READ, key: "users", fallbackVi: "Người dùng", fallbackEn: "Users" },
   { href: "/roles", icon: ShieldCheck, permission: PERMISSIONS.ROLE_READ, key: "roles", fallbackVi: "Vai trò và quyền", fallbackEn: "Roles & Permissions" },
   { href: "/audit-logs", icon: ClipboardList, permission: PERMISSIONS.AUDIT_LOG_READ, key: "auditLogs", fallbackVi: "Nhật ký kiểm toán", fallbackEn: "Audit Logs" },
-  { href: "/notifications", icon: Bell, key: "notifications", fallbackVi: "Thông báo", fallbackEn: "Notifications" },
+  { href: "/notifications", icon: Bell, permission: PERMISSIONS.NOTIFICATION_READ, key: "notifications", fallbackVi: "Thông báo", fallbackEn: "Notifications" },
   { href: "/studio", icon: Palette, permission: PERMISSIONS.STUDIO_ACCESS, key: "studio", fallbackVi: "Creator Studio", fallbackEn: "Creator Studio" },
-  { href: "/settings/integrations", icon: KeyRound, permission: PERMISSIONS.API_KEY_READ, key: "integrations", fallbackVi: "API và Webhook", fallbackEn: "API & Webhooks" },
+  { href: "/settings/integrations", icon: KeyRound, permissions: [PERMISSIONS.API_KEY_READ, PERMISSIONS.WEBHOOK_READ], key: "integrations", fallbackVi: "API và Webhook", fallbackEn: "API & Webhooks" },
   { href: "/settings/system", icon: Flag, permission: PERMISSIONS.SYSTEM_CONFIG_READ, key: "systemConfig", fallbackVi: "Cấu hình hệ thống", fallbackEn: "System Configuration" },
-  { href: "/settings/maintenance", icon: Construction, permission: PERMISSIONS.MAINTENANCE_READ, key: "maintenance", fallbackVi: "Bảo trì", fallbackEn: "Maintenance" },
+  { href: "/settings/maintenance", icon: Construction, permissions: [PERMISSIONS.MAINTENANCE_READ, PERMISSIONS.MAINTENANCE_MANAGE], key: "maintenance", fallbackVi: "Bảo trì", fallbackEn: "Maintenance" },
   { href: "/settings/cron", icon: CalendarClock, permission: PERMISSIONS.CRON_JOB_READ, key: "cronJobs", fallbackVi: "Tác vụ định kỳ", fallbackEn: "Scheduled Jobs" },
-  { href: "/settings", icon: Settings, key: "settings", fallbackVi: "Cài đặt", fallbackEn: "Settings" },
+  {
+    href: "/settings",
+    icon: Settings,
+    permissions: SETTINGS_ACCESS_PERMISSIONS,
+    key: "settings",
+    fallbackVi: "Cài đặt",
+    fallbackEn: "Settings",
+  },
 ];
 
 export function Sidebar() {
@@ -65,8 +74,10 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-30 flex h-screen w-72 flex-col border-r-2 border-kawaii-sky/30 bg-card/90 backdrop-blur-md transition-transform duration-300 md:sticky md:top-0 md:translate-x-0",
-        isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+        "fixed inset-y-0 left-0 z-30 flex h-screen w-72 shrink-0 flex-col border-r-2 border-kawaii-sky/30 bg-card/90 backdrop-blur-md transition-[transform,width,border-color] duration-300 md:sticky md:top-0 md:translate-x-0",
+        isSidebarOpen
+          ? "translate-x-0 md:w-72"
+          : "pointer-events-none -translate-x-full overflow-hidden md:w-0 md:translate-x-0 md:border-r-0",
       )}
     >
 
@@ -133,8 +144,8 @@ export function Sidebar() {
             </Link>
           );
 
-          return item.permission ? (
-            <PermissionGate key={item.href} permission={item.permission}>
+          return item.permission || item.permissions ? (
+            <PermissionGate key={item.href} permission={item.permission} permissions={item.permissions}>
               {link}
             </PermissionGate>
           ) : (

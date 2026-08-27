@@ -6,6 +6,7 @@ import { MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useTranslation } from "@/hooks/use-translation";
+import { getAuthenticatedDestination } from "@/lib/auth-routing";
 
 function DiscordCallbackContent() {
   const router = useRouter();
@@ -21,21 +22,15 @@ function DiscordCallbackContent() {
       return;
     }
 
-    refetch().then(() => {
+    refetch().then((result) => {
       toast.success("Đăng nhập Discord thành công! Chào mừng bạn.");
       const storedReturnPath = sessionStorage.getItem("loichoi-auth-return-to");
       sessionStorage.removeItem("loichoi-auth-return-to");
-      const safeReturnPath = storedReturnPath && storedReturnPath.startsWith("/") && !storedReturnPath.startsWith("//")
-        ? storedReturnPath
-        : "/dashboard";
-      router.replace(safeReturnPath);
+      router.replace(getAuthenticatedDestination(result.data, storedReturnPath));
     }).catch(() => {
       const storedReturnPath = sessionStorage.getItem("loichoi-auth-return-to");
       sessionStorage.removeItem("loichoi-auth-return-to");
-      const safeReturnPath = storedReturnPath && storedReturnPath.startsWith("/") && !storedReturnPath.startsWith("//")
-        ? storedReturnPath
-        : "/dashboard";
-      router.replace(safeReturnPath);
+      router.replace(getAuthenticatedDestination(null, storedReturnPath));
     });
   }, [router, searchParams, refetch]);
 
@@ -69,4 +64,3 @@ export default function DiscordCallbackPage() {
     </Suspense>
   );
 }
-

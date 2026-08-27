@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { authService } from "@/services/auth.service";
 import { useTranslation } from "@/hooks/use-translation";
+import { getAuthenticatedDestination, getSafeInternalPath } from "@/lib/auth-routing";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -29,16 +30,16 @@ export default function LoginPage() {
   const getSafeReturnPath = () => {
     const searchParams = new URLSearchParams(window.location.search);
     const next = searchParams.get("next") || searchParams.get("redirect");
-    return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+    return getSafeInternalPath(next);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await authService.login({ email, password });
+      const response = await authService.login({ email, password });
       toast.success("Đăng nhập thành công! Chúc bạn ngày vui vẻ.");
-      window.location.href = getSafeReturnPath();
+      window.location.href = getAuthenticatedDestination(response.data.user, getSafeReturnPath());
     } catch (err: unknown) {
       const errorMsg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại!";
       toast.error(errorMsg);
@@ -49,8 +50,10 @@ export default function LoginPage() {
 
   const handleDiscordLogin = () => {
     const returnPath = getSafeReturnPath();
-    if (returnPath !== "/dashboard") {
+    if (returnPath) {
       sessionStorage.setItem("loichoi-auth-return-to", returnPath);
+    } else {
+      sessionStorage.removeItem("loichoi-auth-return-to");
     }
     window.location.href = authService.getDiscordOAuthUrl();
   };

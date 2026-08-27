@@ -2,26 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Flame, Keyboard, LogIn, LogOut, Menu, User as UserIcon, UserPlus } from "lucide-react";
+import { Flame, Keyboard, LogIn, LogOut, PanelLeftClose, PanelLeftOpen, User as UserIcon, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "./brand-logo";
 import { ThemeToggle } from "./theme-toggle";
 import { LanguageToggle } from "./language-toggle";
+import { NotificationDropdown } from "./notification-dropdown";
 import { useAuth } from "@/hooks/use-auth";
 import { useUiStore } from "@/stores/ui-store";
 import { useTranslation } from "@/hooks/use-translation";
 import { authService } from "@/services/auth.service";
 import { getPublicCopy } from "@/lib/public-copy";
 import { cn } from "@/lib/utils";
-import { useNotificationStream } from "@/hooks/use-notification-stream";
 
 export function Header() {
   const { user, isAuthenticated } = useAuth();
-  const { toggleSidebar } = useUiStore();
+  const { isSidebarOpen, toggleSidebar } = useUiStore();
   const { t, language, isMounted } = useTranslation();
   const pathname = usePathname();
   const publicText = getPublicCopy(language);
-  const { unreadCount } = useNotificationStream(isAuthenticated);
+  const isPublicRoute = pathname === "/" ||
+    pathname === "/keyboards" ||
+    (pathname.startsWith("/keyboards/") && !pathname.startsWith("/keyboards/manage")) ||
+    pathname === "/trending";
+  const showSidebarToggle = isAuthenticated && !isPublicRoute;
 
   const publicLinks = [
     { href: "/keyboards", label: isMounted ? t.nav.explore : publicText.nav.explore, icon: Keyboard },
@@ -40,15 +44,20 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 flex min-h-20 w-full flex-wrap items-center justify-between gap-y-2 border-b-2 border-kawaii-sky/30 bg-background/90 px-4 py-3 md:px-8 backdrop-blur-md">
       <div className="flex items-center gap-3">
-        {isAuthenticated && (
+        {showSidebarToggle && (
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
             aria-label={isMounted ? t.nav.toggleSidebar : "Toggle Sidebar"}
-            className="md:hidden rounded-full"
+            aria-expanded={isSidebarOpen}
+            className="rounded-full"
           >
-            <Menu className="h-5 w-5 text-kawaii-mocha" />
+            {isSidebarOpen ? (
+              <PanelLeftClose className="h-5 w-5 text-kawaii-mocha" />
+            ) : (
+              <PanelLeftOpen className="h-5 w-5 text-kawaii-mocha" />
+            )}
             <span className="sr-only">{isMounted ? t.nav.toggleSidebar : "Toggle Sidebar"}</span>
           </Button>
         )}
@@ -89,22 +98,7 @@ export function Header() {
         <ThemeToggle />
         {isAuthenticated ? (
           <div className="flex items-center gap-2.5">
-            <Link href="/notifications" className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={isMounted ? t.nav.notifications : "Thông báo"}
-                title={isMounted ? t.nav.notifications : "Thông báo"}
-                className="rounded-full"
-              >
-                <Bell className="h-4 w-4 text-kawaii-mocha" />
-              </Button>
-              {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-background bg-kawaii-pink px-1 text-[10px] font-black text-kawaii-mocha">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              )}
-            </Link>
+            <NotificationDropdown />
             <Link href="/profile">
               <Button
                 variant="outline"
