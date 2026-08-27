@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useTranslation } from "@/hooks/use-translation";
 import { getPublicCopy } from "@/lib/public-copy";
+import axios from "axios";
 import { keyboardService } from "@/services/keyboard.service";
 
 export type DownloadState = "login" | "forbidden" | "discord" | "missing" | "rate" | "error";
@@ -73,20 +74,24 @@ export function DownloadButton({ slug, errorState: initialErrorState }: { slug: 
       if (data?.downloadUrl) {
         window.location.href = data.downloadUrl;
       }
-    } catch (err: any) {
-      const status = err.response?.status;
-      const code = err.response?.data?.code;
+    } catch (err: unknown) {
+      if (axios.isAxiosError<{ code?: string }>(err)) {
+        const status = err.response?.status;
+        const code = err.response?.data?.code;
 
-      if (status === 401) {
-        setCurrentErrorState("login");
-      } else if (status === 403 && code?.startsWith("DISCORD_")) {
-        setCurrentErrorState("discord");
-      } else if (status === 403) {
-        setCurrentErrorState("forbidden");
-      } else if (status === 404) {
-        setCurrentErrorState("missing");
-      } else if (status === 429) {
-        setCurrentErrorState("rate");
+        if (status === 401) {
+          setCurrentErrorState("login");
+        } else if (status === 403 && code?.startsWith("DISCORD_")) {
+          setCurrentErrorState("discord");
+        } else if (status === 403) {
+          setCurrentErrorState("forbidden");
+        } else if (status === 404) {
+          setCurrentErrorState("missing");
+        } else if (status === 429) {
+          setCurrentErrorState("rate");
+        } else {
+          setCurrentErrorState("error");
+        }
       } else {
         setCurrentErrorState("error");
       }
