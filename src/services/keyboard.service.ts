@@ -79,6 +79,13 @@ export const keyboardService = {
     return response.data;
   },
 
+  async download(slug: string): Promise<{ downloadUrl: string }> {
+    const response = await apiClient.post<ApiResponse<{ downloadUrl: string }>>(
+      `/keyboards/${encodeURIComponent(slug)}/download`,
+    );
+    return response.data.data;
+  },
+
   async getUploadUrl(
     contentType: string,
     imageType: "COVER" | "PREVIEW" = "COVER",
