@@ -280,12 +280,12 @@ export function ThemeImageUploader({
                   {/* Badge */}
                   <div className="absolute left-2 top-2 z-10">
                     {isCover ? (
-                      <Badge className="bg-kawaii-babyblue text-xs font-bold text-kawaii-mocha shadow-sm">
+                      <Badge className="bg-kawaii-babyblue text-[10px] font-bold text-kawaii-mocha shadow-sm">
                         <CheckCircle2 className="mr-1 h-3 w-3" />
                         {isMounted ? t.adminKeyboards.coverBadge : "Ảnh bìa chính"}
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-xs text-kawaii-mocha/80 shadow-sm">
+                      <Badge variant="secondary" className="text-[10px] text-kawaii-mocha/80 shadow-sm">
                         {isMounted ? t.adminKeyboards.previewBadge : "Ảnh xem trước"} #{index}
                       </Badge>
                     )}
@@ -315,13 +315,13 @@ export function ThemeImageUploader({
                       size="sm"
                       onClick={() => handleSetCover(url)}
                       disabled={disabled}
-                      className="h-7 w-full text-xs font-bold text-kawaii-mocha hover:bg-kawaii-sky/30"
+                      className="h-7 w-full gap-1 text-[10px] font-bold text-kawaii-mocha hover:bg-kawaii-sky/30"
                     >
-                      <Star className="mr-1 h-3 w-3 text-kawaii-mocha" />
+                      <Star className="h-3 w-3 text-kawaii-mocha" />
                       {isMounted ? t.adminKeyboards.setAsCover : "Đặt làm ảnh bìa"}
                     </Button>
                   ) : (
-                    <span className="w-full text-center text-xs font-bold text-kawaii-mocha/75">
+                    <span className="w-full text-center text-[10px] font-bold text-kawaii-mocha/75">
                       {isMounted ? t.adminKeyboards.coverBadge : "Ảnh bìa chính"}
                     </span>
                   )}

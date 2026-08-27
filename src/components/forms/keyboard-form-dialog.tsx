@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -75,24 +76,25 @@ export function KeyboardFormDialog({
   const currentCoverUrl = watch("coverUrl");
   const currentPreviewUrls = watch("previewUrls");
 
-  const handleOpen = (next: boolean) => {
-    if (next) reset(keyboard ? {
+  useEffect(() => {
+    if (!open) return;
+
+    reset(keyboard ? {
       name: keyboard.name, slug: keyboard.slug, description: keyboard.description ?? "", coverUrl: keyboard.coverUrl, driveUrl: keyboard.driveUrl,
       platform: keyboard.platform, status: keyboard.status, accessLevel: keyboard.accessLevel, requiredDiscordRoles: keyboard.requiredDiscordRoleIds.join("\n"),
       categoryIds: keyboard.categories?.map((category) => category.id) ?? [], isFeatured: keyboard.isFeatured,
       colorIds: keyboard.colors?.map((color) => color.id) ?? [],
       styleIds: keyboard.styles?.map((style) => style.id) ?? [],
-      previewUrls: keyboard.previewImages?.sort((a, b) => a.position - b.position).map((image) => image.url).join("\n") ?? "",
+      previewUrls: keyboard.previewImages ? [...keyboard.previewImages].sort((a, b) => a.position - b.position).map((image) => image.url).join("\n") : "",
     } : defaults);
-    onOpenChange(next);
-  };
+  }, [keyboard, open, reset]);
 
   const parsedPreviewUrls = currentPreviewUrls
     ? currentPreviewUrls.split("\n").map((u) => u.trim()).filter(Boolean)
     : [];
 
   return (
-    <Dialog open={open} onOpenChange={handleOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-kawaii-mocha">
