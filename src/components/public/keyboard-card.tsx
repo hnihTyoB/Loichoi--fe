@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Download, LockKeyhole, MonitorSmartphone, Sparkles } from "lucide-react";
+import { Download, Heart, LockKeyhole, MonitorSmartphone, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { KeyboardCardData, KeyboardPlatform } from "@/types/keyboard.types";
@@ -92,10 +92,16 @@ export function KeyboardCard({ keyboard, priority, className, locale = "vi" }: K
             {keyboard.name}
           </h3>
           <div className="mt-4 flex items-center justify-between border-t border-kawaii-sky/40 pt-3 text-xs font-bold text-kawaii-mocha/65">
-            <span className="inline-flex items-center gap-1.5">
-              <Download className="h-3.5 w-3.5" />
-              {formatCount(keyboard.downloadCount, locale === "vi" ? "vi-VN" : "en-US")}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1.5">
+                <Download className="h-3.5 w-3.5" />
+                {formatCount(keyboard.downloadCount, locale === "vi" ? "vi-VN" : "en-US")}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Heart className="h-3.5 w-3.5 text-kawaii-pink" />
+                {formatCount(keyboard.likeCount ?? 0, locale === "vi" ? "vi-VN" : "en-US")}
+              </span>
+            </div>
             {keyboard.author ? (
               <span className="max-w-[55%] truncate">
                 {keyboard.author.fullName || keyboard.author.username || "Loichoi Creator"}
