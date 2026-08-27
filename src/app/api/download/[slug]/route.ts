@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isSupportedDownloadUrl } from "@/lib/download-url";
 
 const backendUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:9999").replace(/\/$/, "");
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -32,11 +33,11 @@ export async function POST(
       const location = response.headers.get("location");
       if (!location) return detailRedirect(request, slug, "error");
 
-      const destination = new URL(location);
-      if (destination.protocol !== "https:" || !["drive.google.com", "docs.google.com"].includes(destination.hostname)) {
+      if (!isSupportedDownloadUrl(location)) {
         return detailRedirect(request, slug, "error");
       }
 
+      const destination = new URL(location);
       return NextResponse.redirect(destination, 302);
     }
 

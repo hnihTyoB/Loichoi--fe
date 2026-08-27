@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Flame, Grid2X2, Keyboard, LogIn, LogOut, Menu, User as UserIcon, UserPlus } from "lucide-react";
+import { Bell, Flame, Keyboard, LogIn, LogOut, Menu, User as UserIcon, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "./brand-logo";
 import { ThemeToggle } from "./theme-toggle";
@@ -25,7 +25,6 @@ export function Header() {
 
   const publicLinks = [
     { href: "/keyboards", label: isMounted ? t.nav.explore : publicText.nav.explore, icon: Keyboard },
-    { href: "/categories", label: isMounted ? t.nav.categories : publicText.nav.categories, icon: Grid2X2 },
     { href: "/trending", label: isMounted ? t.nav.trending : publicText.nav.trending, icon: Flame },
   ];
 
@@ -147,4 +146,3 @@ export function Header() {
     </header>
   );
 }
-

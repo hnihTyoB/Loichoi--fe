@@ -124,7 +124,7 @@ export function ThemeImageUploader({
       toast.success(
         isMounted
           ? t.adminKeyboards.uploadSuccess
-          : "Đã tải ảnh lên R2 thành công",
+          : "Đã tải ảnh lên thành công",
         { id: toastId },
       );
     } catch (error: unknown) {

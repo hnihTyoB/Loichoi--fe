@@ -42,6 +42,8 @@ const navItems: NavItemConfig[] = [
   { href: "/dashboard", icon: Home, key: "dashboard", fallbackVi: "Tổng quan", fallbackEn: "Dashboard" },
   { href: "/keyboards/manage", icon: Palette, permission: PERMISSIONS.KEYBOARD_READ, key: "keyboardsManage", fallbackVi: "Quản trị theme", fallbackEn: "Theme Management" },
   { href: "/categories/manage", icon: FolderTree, permission: PERMISSIONS.CATEGORY_READ, key: "categoriesManage", fallbackVi: "Quản trị danh mục", fallbackEn: "Category Management" },
+  { href: "/colors/manage", icon: Palette, permission: PERMISSIONS.COLOR_READ, key: "colorsManage", fallbackVi: "Quản trị màu sắc", fallbackEn: "Color Management" },
+  { href: "/styles/manage", icon: Sparkles, permission: PERMISSIONS.STYLE_READ, key: "stylesManage", fallbackVi: "Quản trị phong cách", fallbackEn: "Style Management" },
   { href: "/collections", icon: Boxes, permission: PERMISSIONS.COLLECTION_READ, key: "collections", fallbackVi: "Bộ sưu tập", fallbackEn: "Collections" },
   { href: "/users", icon: Users, permission: PERMISSIONS.USER_READ, key: "users", fallbackVi: "Người dùng", fallbackEn: "Users" },
   { href: "/roles", icon: ShieldCheck, permission: PERMISSIONS.ROLE_READ, key: "roles", fallbackVi: "Vai trò và quyền", fallbackEn: "Roles & Permissions" },
@@ -152,4 +154,3 @@ export function Sidebar() {
     </aside>
   );
 }
-

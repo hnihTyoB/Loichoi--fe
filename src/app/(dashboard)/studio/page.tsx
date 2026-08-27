@@ -21,6 +21,7 @@ import { PERMISSIONS } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
 import { categoryService } from "@/services/category.service";
 import { studioService } from "@/services/studio.service";
+import { colorService, styleService } from "@/services/taxonomy.service";
 import type { AdminKeyboard, KeyboardPayload } from "@/types/admin.types";
 
 const profileSchema = z.object({
@@ -51,6 +52,14 @@ export default function StudioPage() {
   const categories = useQuery({
     queryKey: ["categories", "manage", "studio-options"],
     queryFn: () => categoryService.getManagementList({ limit: 100, isActive: true }),
+  });
+  const colors = useQuery({
+    queryKey: ["public-keyboard-colors"],
+    queryFn: colorService.getPublicList,
+  });
+  const styles = useQuery({
+    queryKey: ["public-keyboard-styles"],
+    queryFn: styleService.getPublicList,
   });
 
   const refresh = () => {
@@ -237,6 +246,8 @@ export default function StudioPage() {
           }}
           keyboard={editing}
           categories={categories.data?.data ?? []}
+          colors={colors.data ?? []}
+          styles={styles.data ?? []}
           busy={saveTheme.isPending}
           onSubmit={(payload) => saveTheme.mutateAsync({ payload, id: editing?.id }).then(() => undefined)}
         />
@@ -305,4 +316,3 @@ export default function StudioPage() {
     </PermissionGate>
   );
 }
-

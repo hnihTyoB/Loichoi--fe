@@ -3,15 +3,19 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Download, FileArchive, Grid2X2, Images, MonitorSmartphone, ShieldCheck, UserRound } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AlertTriangle, ArrowLeft, Download, Heart, Images, MonitorSmartphone, ShieldCheck, UserRound } from "lucide-react";
+import { toast } from "sonner";
 import { DownloadButton, type DownloadState } from "@/components/public/download-button";
 import { KeyboardGrid, KeyboardGridSkeleton } from "@/components/public/keyboard-grid";
 import { StatePanel } from "@/components/public/state-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useKeyboard, useKeyboards } from "@/hooks/use-keyboards";
+import { useAuth } from "@/hooks/use-auth";
+import { useKeyboard, useKeyboards, useToggleKeyboardLike } from "@/hooks/use-keyboards";
 import { useTranslation } from "@/hooks/use-translation";
+import { getErrorMessage } from "@/lib/errors";
 import { getPublicCopy } from "@/lib/public-copy";
 import type { KeyboardDetail } from "@/types/keyboard.types";
 
@@ -82,9 +86,12 @@ function KeyboardGallery({ keyboard, previewLabel, previewDescription, imageUnit
 }
 
 export function KeyboardDetailContent({ slug, initialData, downloadState }: { slug: string; initialData?: KeyboardDetail; downloadState?: DownloadState }) {
+  const router = useRouter();
   const { language } = useTranslation();
+  const auth = useAuth();
   const text = getPublicCopy(language);
   const keyboard = useKeyboard(slug, initialData);
+  const toggleLike = useToggleKeyboardLike(slug);
   const categorySlug = keyboard.data?.categories[0]?.slug;
   const related = useKeyboards({ category: categorySlug, limit: 5, sort: "popular" });
 
@@ -115,6 +122,27 @@ export function KeyboardDetailContent({ slug, initialData, downloadState }: { sl
   const item = keyboard.data;
   const relatedItems = related.data?.data.filter((candidate) => candidate.id !== item.id).slice(0, 4) ?? [];
 
+  const handleToggleLike = () => {
+    if (auth.isLoading || toggleLike.isPending) return;
+    if (!auth.isAuthenticated) {
+      toast.error(text.detail.likeLogin);
+      router.push(`/login?next=${encodeURIComponent(`/keyboards/${item.slug}`)}`);
+      return;
+    }
+    toggleLike.mutate(undefined, {
+      onSuccess: (result) => toast.success(result.liked ? text.detail.likedSuccess : text.detail.unlikedSuccess),
+      onError: (error) => {
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        if (status === 401) {
+          toast.error(text.detail.likeLogin);
+          router.push(`/login?next=${encodeURIComponent(`/keyboards/${item.slug}`)}`);
+          return;
+        }
+        toast.error(getErrorMessage(error, text.detail.likeError));
+      },
+    });
+  };
+
   return (
     <article className="space-y-14">
       <Button asChild variant="ghost" className="-ml-3">
@@ -128,8 +156,21 @@ export function KeyboardDetailContent({ slug, initialData, downloadState }: { sl
           <div className="flex flex-wrap gap-2">
             {item.isFeatured ? <Badge variant="secondary">Featured</Badge> : null}
             {item.categories.map((category) => (
-              <Link key={category.id} href={`/categories/${category.slug}`}>
+              <Link key={category.id} href={`/keyboards?category=${encodeURIComponent(category.slug)}`}>
                 <Badge>{category.name}</Badge>
+              </Link>
+            ))}
+            {item.colors.map((color) => (
+              <Link key={color.id} href={`/keyboards?colors=${encodeURIComponent(color.slug)}`}>
+                <Badge variant="outline" className="bg-card">
+                  <span className="h-3.5 w-3.5 rounded-full border border-kawaii-mocha/20 shadow-inner" style={{ backgroundColor: color.hex }} />
+                  {color.name}
+                </Badge>
+              </Link>
+            ))}
+            {item.styles.map((style) => (
+              <Link key={style.id} href={`/keyboards?styles=${encodeURIComponent(style.slug)}`}>
+                <Badge variant="secondary" className="bg-kawaii-blush/55">{style.name}</Badge>
               </Link>
             ))}
           </div>
@@ -154,25 +195,29 @@ export function KeyboardDetailContent({ slug, initialData, downloadState }: { sl
               <dt className="flex items-center gap-2 text-xs font-bold text-kawaii-mocha/55"><Download className="h-4 w-4" />{text.common.downloads}</dt>
               <dd className="mt-1 font-extrabold text-kawaii-mocha">{new Intl.NumberFormat(language === "vi" ? "vi-VN" : "en-US").format(item.downloadCount)}</dd>
             </div>
-            <div className="rounded-2xl bg-kawaii-blush/35 p-4">
-              <dt className="flex items-center gap-2 text-xs font-bold text-kawaii-mocha/55"><Grid2X2 className="h-4 w-4" />{text.detail.categories}</dt>
-              <dd className="mt-1 truncate font-extrabold text-kawaii-mocha">{item.categories.map((category) => category.name).join(", ")}</dd>
+            <div className={item.isLiked ? "group relative rounded-2xl bg-kawaii-blush/55 p-4 ring-2 ring-kawaii-pink/45 transition hover:-translate-y-0.5" : "group relative rounded-2xl bg-kawaii-blush/35 p-4 transition hover:-translate-y-0.5 hover:bg-kawaii-blush/50"}>
+              <dt className="flex items-center gap-2 text-xs font-bold text-kawaii-mocha/55">
+                <Heart className={item.isLiked ? "h-4 w-4 fill-current text-kawaii-pink" : "h-4 w-4 transition group-hover:text-kawaii-pink"} />
+                {item.isLiked ? text.detail.liked : text.detail.likes}
+              </dt>
+              <dd className="mt-1 font-extrabold text-kawaii-mocha">{new Intl.NumberFormat(language === "vi" ? "vi-VN" : "en-US").format(item.likeCount ?? 0)}</dd>
+              <button
+                type="button"
+                className="absolute inset-0 cursor-pointer rounded-2xl outline-none focus-visible:ring-4 focus-visible:ring-kawaii-pink/45 disabled:cursor-wait"
+                aria-label={item.isLiked ? text.detail.unlikeAction : text.detail.likeAction}
+                aria-pressed={Boolean(item.isLiked)}
+                disabled={auth.isLoading || toggleLike.isPending}
+                onClick={handleToggleLike}
+              >
+                <span className="sr-only">{item.isLiked ? text.detail.unlikeAction : text.detail.likeAction}</span>
+              </button>
             </div>
           </dl>
 
-          <div className="mt-7 rounded-3xl border-2 border-kawaii-sky/55 bg-kawaii-cloud/35 p-5">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-kawaii-sky/55 text-kawaii-mocha shadow-inner">
-                <FileArchive className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="font-black text-kawaii-mocha">{text.detail.packageTitle}</h2>
-                <p className="mt-1 text-xs font-bold text-kawaii-warmbrown">{text.detail.packageIncludes}</p>
-              </div>
-            </div>
-            <p className="mt-3 text-xs font-medium leading-relaxed text-kawaii-mocha/65">{text.detail.packageDescription}</p>
-            <div className="mt-4">
-            <DownloadButton slug={item.slug} errorState={downloadState} />
+          <div className="mt-7">
+            <p className="text-center text-sm font-medium leading-relaxed text-kawaii-mocha/70">{text.detail.packageDescription}</p>
+            <div className="mt-5">
+              <DownloadButton slug={item.slug} errorState={downloadState} />
             </div>
           </div>
         </div>

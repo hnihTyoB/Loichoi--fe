@@ -2,12 +2,13 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, Filter, Search, SlidersHorizontal, X } from "lucide-react";
+import { AlertTriangle, ArrowUpDown, ChevronDown, Filter, Grid2X2, MonitorSmartphone, Palette, Search, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { KeyboardGrid, KeyboardGridSkeleton } from "@/components/public/keyboard-grid";
 import { StatePanel } from "@/components/public/state-panel";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { useCategories, useKeyboards } from "@/hooks/use-keyboards";
+import { useCategories, useColors, useKeyboards, useStyles } from "@/hooks/use-keyboards";
 import { useTranslation } from "@/hooks/use-translation";
 import { getPublicCopy } from "@/lib/public-copy";
 import type { KeyboardSort } from "@/types/keyboard.types";
@@ -20,36 +21,70 @@ function positivePage(value: string | null) {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
 }
 
-export function ExploreContent({
-  mode = "explore",
-  fixedCategory,
+function taxonomyValues(plural: string | null, singular: string | null) {
+  return Array.from(new Set((plural || singular || "").split(",").map((value) => value.trim()).filter(Boolean)));
+}
+
+function SingleFilterDropdown({
+  value,
+  allLabel,
+  options,
+  ariaLabel,
+  onValueChange,
 }: {
-  mode?: "explore" | "trending" | "category";
-  fixedCategory?: string;
+  value?: string;
+  allLabel: string;
+  options: Array<{ value: string; label: string }>;
+  ariaLabel: string;
+  onValueChange: (value: string) => void;
 }) {
+  const selected = options.find((option) => option.value === value);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" aria-label={ariaLabel} className="flex h-11 w-full items-center gap-2 rounded-2xl border-2 border-input bg-background px-4 text-left text-sm font-bold text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/25">
+          <span className="min-w-0 flex-1 truncate">{selected?.label || allLabel}</span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-kawaii-mocha/50" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-h-64 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto">
+        <DropdownMenuRadioGroup value={value || "__all"} onValueChange={(next) => onValueChange(next === "__all" ? "" : next)}>
+          <DropdownMenuRadioItem value="__all">{allLabel}</DropdownMenuRadioItem>
+          {options.map((option) => <DropdownMenuRadioItem key={option.value} value={option.value}>{option.label}</DropdownMenuRadioItem>)}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trending" }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { language } = useTranslation();
   const text = getPublicCopy(language);
   const { data: categories = [] } = useCategories();
+  const { data: colors = [] } = useColors();
+  const { data: styles = [] } = useStyles();
   const filters = useMemo(() => {
     const platformValue = searchParams.get("platform");
     const sortValue = searchParams.get("sort") as KeyboardSort | null;
     return {
       search: searchParams.get("search")?.trim() || "",
-      category: fixedCategory || searchParams.get("category") || "",
+      category: searchParams.get("category") || "",
+      colors: taxonomyValues(searchParams.get("colors"), searchParams.get("color")),
+      styles: taxonomyValues(searchParams.get("styles"), searchParams.get("style")),
       platform: platformValue && validPlatforms.has(platformValue) ? (platformValue as "ios" | "android" | "both") : undefined,
       sort: mode === "trending" ? ("popular" as const) : sortValue && validSorts.has(sortValue) ? sortValue : ("latest" as const),
       page: positivePage(searchParams.get("page")),
     };
-  }, [fixedCategory, mode, searchParams]);
+  }, [mode, searchParams]);
 
   const [searchInput, setSearchInput] = useState(filters.search);
   useEffect(() => setSearchInput(filters.search), [filters.search]);
 
-  const query = useKeyboards({ ...filters, limit: 12 });
-  const activeCategory = categories.find((category) => category.slug === fixedCategory);
+  const query = useKeyboards({ ...filters, limit: 8 });
 
   function updateUrl(values: Record<string, string | number | undefined>, resetPage = true) {
     const next = new URLSearchParams(searchParams.toString());
@@ -67,6 +102,11 @@ export function ExploreContent({
     updateUrl({ search: searchInput.trim() });
   }
 
+  function toggleTaxonomy(key: "colors" | "styles", slug: string, current: string[]) {
+    const next = current.includes(slug) ? current.filter((value) => value !== slug) : [...current, slug];
+    updateUrl({ [key]: next.length ? next.join(",") : undefined, [key === "colors" ? "color" : "style"]: undefined });
+  }
+
   function clearFilters() {
     setSearchInput("");
     const preserved = new URLSearchParams();
@@ -74,24 +114,18 @@ export function ExploreContent({
     router.push(preserved.size ? `${pathname}?${preserved}` : pathname, { scroll: false });
   }
 
-  const heading = mode === "trending"
-    ? text.trending
-    : mode === "category"
-      ? {
-          eyebrow: text.categories.eyebrow,
-          title: activeCategory?.name || fixedCategory || text.categories.title,
-          description: text.categories.description,
-        }
-      : text.explore;
+  const heading = mode === "trending" ? text.trending : text.explore;
 
   const totalPages = query.data?.meta.totalPages ?? 1;
-  const hasActiveFilters = Boolean(filters.search || (!fixedCategory && filters.category) || filters.platform || (mode !== "trending" && filters.sort !== "latest"));
+  const hasActiveFilters = Boolean(filters.search || filters.category || filters.colors.length || filters.styles.length || filters.platform || (mode !== "trending" && filters.sort !== "latest"));
+  const selectedColors = colors.filter((color) => filters.colors.includes(color.slug));
+  const selectedStyles = styles.filter((style) => filters.styles.includes(style.slug));
 
   return (
     <div className="space-y-8">
       <section className="relative overflow-hidden rounded-[2.75rem] border-2 border-kawaii-sky/60 bg-gradient-to-br from-kawaii-cloud via-card to-kawaii-blush/25 px-6 py-10 shadow-cloud md:px-10">
         <div className="absolute -right-10 -top-12 h-44 w-44 rounded-full bg-kawaii-sky/40 blur-2xl" />
-        <div className="relative max-w-3xl">
+        <div className="relative max-w-4xl">
           <div className="inline-flex items-center gap-2 rounded-full bg-card/85 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-kawaii-warmbrown shadow-sm">
             <SlidersHorizontal className="h-4 w-4" />
             {heading.eyebrow}
@@ -132,49 +166,110 @@ export function ExploreContent({
           </Button>
         </form>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {!fixedCategory ? (
-            <label className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
-              <span className="ml-2">{text.explore.category}</span>
-              <select
-                value={filters.category}
-                onChange={(event) => updateUrl({ category: event.target.value })}
-                className="h-11 w-full rounded-2xl border-2 border-input bg-background px-4 text-sm font-bold text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/25"
-              >
-                <option value="">{text.explore.allCategories}</option>
-                {categories.map((category) => <option key={category.id} value={category.slug}>{category.name}</option>)}
-              </select>
-            </label>
-          ) : null}
-          <label className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
-            <span className="ml-2">{text.explore.platform}</span>
-            <select
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <div className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
+            <span className="ml-2 flex items-center gap-1.5"><Grid2X2 className="h-3.5 w-3.5" />{text.explore.category}</span>
+            <SingleFilterDropdown
+              value={filters.category}
+              allLabel={text.explore.allCategories}
+              ariaLabel={text.explore.category}
+              options={categories.map((category) => ({ value: category.slug, label: category.name }))}
+              onValueChange={(value) => updateUrl({ category: value })}
+            />
+          </div>
+          <div className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
+            <span className="ml-2 flex items-center gap-1.5"><MonitorSmartphone className="h-3.5 w-3.5" />{text.explore.platform}</span>
+            <SingleFilterDropdown
               value={filters.platform || ""}
-              onChange={(event) => updateUrl({ platform: event.target.value })}
-              className="h-11 w-full rounded-2xl border-2 border-input bg-background px-4 text-sm font-bold text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/25"
-            >
-              <option value="">{text.explore.allPlatforms}</option>
-              <option value="ios">iOS</option>
-              <option value="android">Android</option>
-              <option value="both">iOS + Android</option>
-            </select>
-          </label>
+              allLabel={text.explore.allPlatforms}
+              ariaLabel={text.explore.platform}
+              options={[
+                { value: "ios", label: "iOS" },
+                { value: "android", label: "Android" },
+                { value: "both", label: "iOS + Android" },
+              ]}
+              onValueChange={(value) => updateUrl({ platform: value })}
+            />
+          </div>
           {mode !== "trending" ? (
-            <label className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
-              <span className="ml-2">{text.explore.sort}</span>
-              <select
+            <div className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
+              <span className="ml-2 flex items-center gap-1.5"><ArrowUpDown className="h-3.5 w-3.5" />{text.explore.sort}</span>
+              <SingleFilterDropdown
                 value={filters.sort}
-                onChange={(event) => updateUrl({ sort: event.target.value === "latest" ? undefined : event.target.value })}
-                className="h-11 w-full rounded-2xl border-2 border-input bg-background px-4 text-sm font-bold text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/25"
-              >
-                <option value="latest">{text.explore.latest}</option>
-                <option value="popular">{text.explore.popular}</option>
-                <option value="liked">{text.explore.liked}</option>
-                <option value="name-asc">{text.explore.nameAsc}</option>
-                <option value="name-desc">{text.explore.nameDesc}</option>
-              </select>
-            </label>
+                allLabel={text.explore.latest}
+                ariaLabel={text.explore.sort}
+                options={[
+                  { value: "latest", label: text.explore.latest },
+                  { value: "popular", label: text.explore.popular },
+                  { value: "liked", label: text.explore.liked },
+                  { value: "name-asc", label: text.explore.nameAsc },
+                  { value: "name-desc", label: text.explore.nameDesc },
+                ]}
+                onValueChange={(value) => updateUrl({ sort: value === "latest" ? undefined : value })}
+              />
+            </div>
           ) : null}
+          <div className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
+            <span className="ml-2 flex items-center gap-1.5"><Palette className="h-3.5 w-3.5" />{text.explore.colors}</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="flex h-11 w-full items-center gap-2 rounded-2xl border-2 border-input bg-background px-4 text-left text-sm font-bold text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/25">
+                  {selectedColors.length === 1 ? <span className="h-4 w-4 shrink-0 rounded-full border border-kawaii-mocha/20 shadow-inner" style={{ backgroundColor: selectedColors[0].hex }} /> : null}
+                  <span className="min-w-0 flex-1 truncate">
+                    {selectedColors.length === 0
+                      ? text.explore.allColors
+                      : selectedColors.length === 1
+                        ? selectedColors[0].name
+                        : `${selectedColors.length} ${text.explore.selected}`}
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-kawaii-mocha/50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-64 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto">
+                {colors.map((color) => (
+                  <DropdownMenuCheckboxItem
+                    key={color.id}
+                    className="gap-2"
+                    checked={filters.colors.includes(color.slug)}
+                    onCheckedChange={() => toggleTaxonomy("colors", color.slug, filters.colors)}
+                    onSelect={(event) => event.preventDefault()}
+                  >
+                    <span className="h-4 w-4 shrink-0 rounded-full border border-kawaii-mocha/20 shadow-inner" style={{ backgroundColor: color.hex }} />
+                    <span className="truncate">{color.name}</span>
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
+            <span className="ml-2 flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5" />{text.explore.styles}</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="flex h-11 w-full items-center gap-2 rounded-2xl border-2 border-input bg-background px-4 text-left text-sm font-bold text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/25">
+                  <span className="min-w-0 flex-1 truncate">
+                    {selectedStyles.length === 0
+                      ? text.explore.allStyles
+                      : selectedStyles.length === 1
+                        ? selectedStyles[0].name
+                        : `${selectedStyles.length} ${text.explore.selected}`}
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-kawaii-mocha/50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-64 w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto">
+                {styles.map((style) => (
+                  <DropdownMenuCheckboxItem
+                    key={style.id}
+                    checked={filters.styles.includes(style.slug)}
+                    onCheckedChange={() => toggleTaxonomy("styles", style.slug, filters.styles)}
+                    onSelect={(event) => event.preventDefault()}
+                  >
+                    <span className="truncate">{style.name}</span>
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </section>
 

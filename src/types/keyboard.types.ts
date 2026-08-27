@@ -20,6 +20,22 @@ export interface KeyboardCategory {
   themeCount?: number;
 }
 
+export interface KeyboardColor {
+  id: string;
+  name: string;
+  slug: string;
+  hex: string;
+  themeCount?: number;
+}
+
+export interface KeyboardStyle {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  themeCount?: number;
+}
+
 export interface KeyboardAuthor {
   id: string;
   fullName: string | null;
@@ -34,6 +50,8 @@ export interface KeyboardCardData {
   coverUrl: string;
   platform: KeyboardPlatform;
   categories: KeyboardCategory[];
+  colors: KeyboardColor[];
+  styles: KeyboardStyle[];
   downloadCount: number;
   accessLevel?: KeyboardAccessLevel;
   likeCount?: number;
@@ -61,6 +79,8 @@ export interface KeyboardListParams {
   limit?: number;
   search?: string;
   category?: string;
+  colors?: string[];
+  styles?: string[];
   platform?: "ios" | "android" | "both";
   accessLevel?: KeyboardAccessLevel;
   featured?: boolean;
@@ -75,4 +95,12 @@ export interface KeyboardListResult {
     limit: number;
     totalPages: number;
   };
+}
+
+export interface KeyboardLikeResult {
+  themeId: string;
+  slug: string;
+  liked: boolean;
+  likeCount: number;
+  message: string;
 }

@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { categoryService } from "@/services/category.service";
 import { keyboardService } from "@/services/keyboard.service";
+import { colorService, styleService } from "@/services/taxonomy.service";
 import { useTranslation } from "@/hooks/use-translation";
 import { PERMISSIONS } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
@@ -25,6 +26,8 @@ export default function KeyboardManagementPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [platform, setPlatform] = useState("");
+  const [colorId, setColorId] = useState("");
+  const [styleId, setStyleId] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AdminKeyboard | null>(null);
   const [deleting, setDeleting] = useState<AdminKeyboard | null>(null);
@@ -32,12 +35,20 @@ export default function KeyboardManagementPage() {
   const [quotaUserId, setQuotaUserId] = useState("");
 
   const list = useQuery({
-    queryKey: ["keyboards", "manage", search, status, platform],
-    queryFn: () => keyboardService.getManagementList({ search: search || undefined, status: status || undefined, platform: platform || undefined, limit: 50 }),
+    queryKey: ["keyboards", "manage", search, status, platform, colorId, styleId],
+    queryFn: () => keyboardService.getManagementList({ search: search || undefined, status: status || undefined, platform: platform || undefined, colorId: colorId || undefined, styleId: styleId || undefined, limit: 50 }),
   });
   const categories = useQuery({
     queryKey: ["categories", "manage", "options"],
     queryFn: () => categoryService.getManagementList({ limit: 100, isActive: true }),
+  });
+  const colors = useQuery({
+    queryKey: ["public-keyboard-colors"],
+    queryFn: colorService.getPublicList,
+  });
+  const styles = useQuery({
+    queryKey: ["public-keyboard-styles"],
+    queryFn: styleService.getPublicList,
   });
 
   const refresh = () => client.invalidateQueries({ queryKey: ["keyboards", "manage"] });
@@ -108,7 +119,7 @@ export default function KeyboardManagementPage() {
         />
         <Card>
           <CardContent className="pt-6 md:pt-8">
-            <div className="grid gap-3 md:grid-cols-[1fr_180px_180px]">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_160px_160px_180px_180px]">
               <label className="relative">
                 <Search className="absolute left-4 top-3.5 h-4 w-4 text-kawaii-mocha/45" />
                 <Input
@@ -129,6 +140,14 @@ export default function KeyboardManagementPage() {
                 <option value="IOS">{isMounted ? t.adminKeyboards.platformIos : "iOS"}</option>
                 <option value="ANDROID">{isMounted ? t.adminKeyboards.platformAndroid : "Android"}</option>
                 <option value="BOTH">{isMounted ? t.adminKeyboards.platformBoth : "Cả hai"}</option>
+              </select>
+              <select className={selectClassName} value={colorId} onChange={(event) => setColorId(event.target.value)} aria-label={isMounted ? t.adminKeyboards.filterColor : "Lọc theo màu"}>
+                <option value="">{isMounted ? t.adminKeyboards.allColors : "Mọi màu sắc"}</option>
+                {colors.data?.map((color) => <option key={color.id} value={color.id}>{color.name}</option>)}
+              </select>
+              <select className={selectClassName} value={styleId} onChange={(event) => setStyleId(event.target.value)} aria-label={isMounted ? t.adminKeyboards.filterStyle : "Lọc theo phong cách"}>
+                <option value="">{isMounted ? t.adminKeyboards.allStyles : "Mọi phong cách"}</option>
+                {styles.data?.map((style) => <option key={style.id} value={style.id}>{style.name}</option>)}
               </select>
             </div>
           </CardContent>
@@ -161,6 +180,11 @@ export default function KeyboardManagementPage() {
                         <div className="text-xs text-kawaii-mocha/55">
                           {item.slug} · {item.categoryNames.join(", ") || (isMounted ? t.adminKeyboards.unclassified : "Chưa phân loại")}
                         </div>
+                        {(item.colorNames.length || item.styleNames.length) ? (
+                          <div className="mt-1 text-xs font-semibold text-kawaii-warmbrown">
+                            {[...item.colorNames, ...item.styleNames].join(" · ")}
+                          </div>
+                        ) : null}
                       </td>
                       <td className="p-3">
                         <Badge variant={item.status === "PUBLISHED" ? "default" : item.status === "HIDDEN" ? "destructive" : "secondary"}>
@@ -203,6 +227,8 @@ export default function KeyboardManagementPage() {
           }}
           keyboard={editing}
           categories={categories.data?.data ?? []}
+          colors={colors.data ?? []}
+          styles={styles.data ?? []}
           busy={save.isPending}
           onSubmit={(payload) => save.mutateAsync({ payload, id: editing?.id }).then(() => undefined)}
         />
@@ -251,4 +277,3 @@ export default function KeyboardManagementPage() {
     </PermissionGate>
   );
 }
-

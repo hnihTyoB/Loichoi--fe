@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Cloud,
   Download,
-  Grid2X2,
   MessageCircle,
   Search,
   Sparkles,
@@ -18,7 +17,7 @@ import { KeyboardGrid, KeyboardGridSkeleton } from "@/components/public/keyboard
 import { PublicFooter } from "@/components/public/public-footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useCategories, useKeyboards } from "@/hooks/use-keyboards";
+import { useKeyboards } from "@/hooks/use-keyboards";
 import { useTranslation } from "@/hooks/use-translation";
 import { getPublicCopy } from "@/lib/public-copy";
 
@@ -53,9 +52,8 @@ export function HomeContent() {
   const { language } = useTranslation();
   const text = getPublicCopy(language);
   const [search, setSearch] = useState("");
-  const featured = useKeyboards({ featured: true, limit: 4, sort: "latest" });
-  const trending = useKeyboards({ limit: 4, sort: "popular" });
-  const categories = useCategories();
+  const explore = useKeyboards({ limit: 8, sort: "latest" });
+  const trending = useKeyboards({ limit: 8, sort: "popular" });
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -72,12 +70,12 @@ export function HomeContent() {
           <div className="pointer-events-none absolute left-[7%] top-20 animate-float text-kawaii-babyblue/55"><Cloud className="h-20 w-20" /></div>
           <div className="pointer-events-none absolute right-[8%] top-16 animate-float-slow text-kawaii-pink/70"><Sparkles className="h-14 w-14" /></div>
           <div className="pointer-events-none absolute bottom-10 right-[22%] h-40 w-40 rounded-full bg-kawaii-sky/45 blur-3xl" />
-          <div className="relative mx-auto max-w-5xl text-center">
+          <div className="relative mx-auto max-w-6xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full border-2 border-kawaii-sky/70 bg-card/85 px-5 py-2 text-sm font-extrabold text-kawaii-mocha shadow-cloud">
               <WandSparkles className="h-4 w-4 text-kawaii-warmbrown" />
               {text.home.badge}
             </div>
-            <h1 className="mx-auto mt-7 max-w-4xl text-4xl font-black leading-[1.08] tracking-tight text-kawaii-mocha sm:text-6xl md:text-7xl">
+            <h1 className="mx-auto mt-7 max-w-6xl text-4xl font-black leading-[1.08] tracking-tight text-kawaii-mocha sm:text-6xl md:text-7xl">
               {text.home.title}
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base font-medium leading-relaxed text-kawaii-mocha/70 md:text-lg">
@@ -101,10 +99,10 @@ export function HomeContent() {
 
         <section className="border-y-2 border-kawaii-sky/30 bg-kawaii-cloud/30 px-4 py-16 md:py-20">
           <div className="mx-auto max-w-7xl">
-            <SectionTitle title={text.home.featured} description={text.home.featuredDesc} href="/keyboards" action={text.common.viewAll} />
-            {featured.isLoading ? <KeyboardGridSkeleton count={4} /> : null}
-            {featured.data?.data.length ? <KeyboardGrid keyboards={featured.data.data} locale={language} priorityCount={4} /> : null}
-            {featured.isError ? (
+            <SectionTitle title={text.nav.explore} description={text.explore.description} href="/keyboards" action={text.common.viewAll} />
+            {explore.isLoading ? <KeyboardGridSkeleton count={8} /> : null}
+            {explore.data?.data.length ? <KeyboardGrid keyboards={explore.data.data} locale={language} priorityCount={8} /> : null}
+            {explore.isError ? (
               <div className="rounded-3xl border-2 border-dashed border-kawaii-sky bg-card p-8 text-center text-sm font-bold text-kawaii-mocha/65">
                 {text.explore.errorDesc}
               </div>
@@ -115,37 +113,13 @@ export function HomeContent() {
         <section className="px-4 py-16 md:py-20">
           <div className="mx-auto max-w-7xl">
             <SectionTitle title={text.home.trending} description={text.home.trendingDesc} href="/trending" action={text.common.viewAll} />
-            {trending.isLoading ? <KeyboardGridSkeleton count={4} /> : null}
+            {trending.isLoading ? <KeyboardGridSkeleton count={8} /> : null}
             {trending.data?.data.length ? <KeyboardGrid keyboards={trending.data.data} locale={language} /> : null}
             {trending.isError ? (
               <div className="rounded-3xl border-2 border-dashed border-kawaii-sky bg-kawaii-cloud/30 p-8 text-center text-sm font-bold text-kawaii-mocha/65">
                 {text.explore.errorDesc}
               </div>
             ) : null}
-          </div>
-        </section>
-
-        <section className="bg-kawaii-blush/15 px-4 py-16 md:py-20">
-          <div className="mx-auto max-w-7xl">
-            <SectionTitle title={text.home.categories} description={text.home.categoriesDesc} href="/categories" action={text.common.viewAll} />
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {categories.data?.slice(0, 8).map((category, index) => (
-                <Link
-                  key={category.id}
-                  href={`/categories/${category.slug}`}
-                  className="group flex items-center gap-4 rounded-[1.75rem] border-2 border-kawaii-sky/55 bg-card p-5 shadow-cloud transition-all hover:-translate-y-1 hover:border-kawaii-babyblue hover:shadow-cloud-hover"
-                >
-                  <div className={index % 2 === 0 ? "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-kawaii-sky/45" : "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-kawaii-blush/65"}>
-                    <Grid2X2 className="h-6 w-6" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate font-extrabold text-kawaii-mocha">{category.name}</h3>
-                    <p className="mt-1 text-xs font-bold text-kawaii-mocha/55">{category.themeCount ?? 0} {text.common.keyboards}</p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
-                </Link>
-              ))}
-            </div>
           </div>
         </section>
 

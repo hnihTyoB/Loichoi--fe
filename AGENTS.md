@@ -19,6 +19,15 @@ Xu hướng thiết kế web hiện đại phong cách dễ thương (Cute Kawai
 - **Đường viền dạng vẽ tay (Soft Borders)**: Sử dụng nét viền mảnh, màu pastel nhẹ (`border-[#CDE4FE]` hoặc `border-[#FFD1DC]`).
 - **Đổ bóng dạng khối mềm (Neumorphism / Soft Cloud Shadows)**: Đổ bóng mờ, xốp và rộng (`shadow-[0_10px_30px_rgba(162,207,254,0.25)]`) để các phần tử như đang bồng bềnh trên mặt nước hoặc bầu trời mây.
 
+### 1.2.1. Quy chuẩn Dropdown (BẮT BUỘC ĐỒNG NHẤT)
+- Các dropdown trong cùng một màn hình hoặc cùng một nhóm bộ lọc phải dùng chung một UI primitive, kích thước trigger, bo góc, đường viền, màu sắc, trạng thái hover/focus và cách mở menu.
+- Không trộn thẻ `<select>` native với dropdown Radix/shadcn trong cùng một nhóm giao diện. Với bộ lọc công khai tại `/keyboards`, lấy dropdown **Màu sắc** và **Phong cách** làm mẫu chuẩn.
+- Dropdown chọn một dùng `DropdownMenuRadioGroup` và `DropdownMenuRadioItem`; dropdown chọn nhiều dùng `DropdownMenuCheckboxItem`.
+- Trigger chuẩn của bộ lọc có chiều cao `h-11`, bo góc `rounded-2xl`, viền `border-2 border-input`, nội dung căn trái và icon chevron nằm bên phải.
+- Mục màu sắc phải có hình tròn màu đứng trước tên và có khoảng cách rõ ràng với tên (tối thiểu `gap-2`).
+- Luôn có nhãn truy cập (`aria-label`), hỗ trợ thao tác bàn phím, trạng thái đang chọn rõ ràng và nội dung dịch qua hệ thống i18n.
+- Ưu tiên tái sử dụng component dropdown đã có thay vì tạo thêm biến thể giao diện mới. Nếu cần biến thể mới, phải giữ nguyên ngôn ngữ thiết kế của dropdown hiện hữu.
+
 ### 1.3. Quy Tắc Icon & Biểu Tượng (Icon System - BẮT BUỘC: KHÔNG DÙNG EMOJI)
 - **TUYỆT ĐỐI KHÔNG SỬ DỤNG EMOJI** trong mã nguồn, văn bản UI, nhãn nút, tiêu đề, mô tả hay thông báo.
 - **CHỈ SỬ DỤNG ICON** từ thư viện **Lucide React** (`lucide-react`) hoặc SVG vector chuẩn.

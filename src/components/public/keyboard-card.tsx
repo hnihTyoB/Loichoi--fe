@@ -64,7 +64,21 @@ export function KeyboardCard({ keyboard, priority, className, locale = "vi" }: K
         </div>
 
         <div className="p-5">
-          <div className="flex min-h-6 flex-wrap gap-1.5">
+          <div className="flex min-h-6 flex-wrap items-center gap-1.5">
+            {keyboard.colors.slice(0, 3).map((color) => (
+              <span
+                key={color.id}
+                title={color.name}
+                aria-label={color.name}
+                className="h-5 w-5 rounded-full border-2 border-card shadow-[0_0_0_1px_rgba(111,78,55,0.16)]"
+                style={{ backgroundColor: color.hex }}
+              />
+            ))}
+            {keyboard.styles.slice(0, 1).map((style) => (
+              <span key={style.id} className="rounded-full bg-kawaii-blush/45 px-2.5 py-1 text-[11px] font-bold text-kawaii-mocha">
+                {style.name}
+              </span>
+            ))}
             {keyboard.categories.slice(0, 2).map((category) => (
               <span
                 key={category.id}

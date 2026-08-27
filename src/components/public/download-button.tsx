@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Download, LoaderCircle, LogIn, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 import { useTranslation } from "@/hooks/use-translation";
 import { getPublicCopy } from "@/lib/public-copy";
 
@@ -13,6 +14,7 @@ const discordUrl = process.env.NEXT_PUBLIC_DISCORD_INVITE_URL || "https://discor
 
 export function DownloadButton({ slug, errorState }: { slug: string; errorState?: DownloadState }) {
   const { language } = useTranslation();
+  const auth = useAuth();
   const text = getPublicCopy(language).download;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -27,26 +29,33 @@ export function DownloadButton({ slug, errorState }: { slug: string; errorState?
           : errorState === "error"
             ? text.error
             : undefined;
+  const requiresLogin = !auth.isLoading && !auth.isAuthenticated;
+
+  if (requiresLogin || errorState === "login") {
+    return (
+      <div className="w-full rounded-2xl border border-kawaii-blush bg-kawaii-blush/25 p-4 text-center text-sm font-semibold text-kawaii-mocha" role="alert">
+        <p>{text.login}</p>
+        <Button asChild className="mt-4 w-full">
+          <Link href={`/login?next=${encodeURIComponent(`/keyboards/${slug}`)}`}><LogIn />{text.loginAction}</Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-3">
-      <form method="post" action={`/api/download/${encodeURIComponent(slug)}`} onSubmit={() => setIsSubmitting(true)}>
-        <Button type="submit" size="lg" className="w-full text-base sm:w-auto sm:min-w-56" disabled={isSubmitting}>
+    <div className="w-full space-y-3">
+      <form className="w-full" method="post" action={`/api/download/${encodeURIComponent(slug)}`} onSubmit={() => setIsSubmitting(true)}>
+        <Button type="submit" size="lg" className="w-full text-base" disabled={auth.isLoading || isSubmitting}>
           {isSubmitting ? <LoaderCircle className="animate-spin" /> : <Download />}
           {isSubmitting ? text.checking : text.action}
         </Button>
       </form>
 
       {message ? (
-        <div className="max-w-lg rounded-2xl border border-kawaii-blush bg-kawaii-blush/25 p-4 text-sm font-semibold text-kawaii-mocha" role="alert">
+        <div className="w-full rounded-2xl border border-kawaii-blush bg-kawaii-blush/25 p-4 text-center text-sm font-semibold text-kawaii-mocha" role="alert">
           <p>{message}</p>
-          {errorState === "login" ? (
-            <Button asChild size="sm" variant="outline" className="mt-3 bg-card">
-              <Link href={`/login?next=${encodeURIComponent(`/keyboards/${slug}`)}`}><LogIn />{text.loginAction}</Link>
-            </Button>
-          ) : null}
           {errorState === "discord" ? (
-            <Button asChild size="sm" variant="outline" className="mt-3 bg-card">
+            <Button asChild size="sm" variant="outline" className="mt-3 w-full bg-card">
               <a href={discordUrl} target="_blank" rel="noreferrer"><MessageCircle />{text.discordAction}</a>
             </Button>
           ) : null}

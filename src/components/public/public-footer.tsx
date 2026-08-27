@@ -80,7 +80,6 @@ export function PublicFooter() {
           <h2 className="font-extrabold text-kawaii-mocha">{text.footer.discover}</h2>
           <nav className="mt-4 flex flex-col items-start gap-3 text-sm font-semibold text-kawaii-mocha/65">
             <Link className="hover:text-kawaii-warmbrown" href="/keyboards">{text.nav.explore}</Link>
-            <Link className="hover:text-kawaii-warmbrown" href="/categories">{text.nav.categories}</Link>
             <Link className="hover:text-kawaii-warmbrown" href="/trending">{text.nav.trending}</Link>
           </nav>
         </div>

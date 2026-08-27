@@ -19,7 +19,11 @@ export interface AdminKeyboard {
   accessLevel: KeyboardAccessLevel;
   requiredDiscordRoleIds: string[];
   categoryNames: string[];
+  colorNames: string[];
+  styleNames: string[];
   categories?: Array<{ id: string; name: string; slug: string; isActive: boolean }>;
+  colors: Array<{ id: string; name: string; slug: string; hex: string }>;
+  styles: Array<{ id: string; name: string; slug: string; description?: string | null }>;
   previewImages?: Array<{ id?: string; url: string; altText?: string | null; position: number }>;
   downloadCount: number;
   likeCount: number;
@@ -39,6 +43,8 @@ export interface KeyboardPayload {
   accessLevel: KeyboardAccessLevel;
   requiredDiscordRoleIds: string[];
   categoryIds: string[];
+  colorIds: string[];
+  styleIds: string[];
   isFeatured: boolean;
   previewImages: Array<{ url: string; altText?: string; position: number }>;
 }
@@ -48,6 +54,26 @@ export interface AdminCategory {
   name: string;
   slug: string;
   isActive: boolean;
+  themeCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminColor {
+  id: string;
+  name: string;
+  slug: string;
+  hex: string;
+  themeCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminStyle {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
   themeCount: number;
   createdAt: string;
   updatedAt: string;

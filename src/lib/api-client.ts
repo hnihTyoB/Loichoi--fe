@@ -80,8 +80,7 @@ apiClient.interceptors.response.use(
             currentPath.startsWith("/reset-password") ||
             currentPath.startsWith("/callback") ||
             currentPath === "/trending" ||
-            (currentPath === "/keyboards" || (currentPath.startsWith("/keyboards/") && !currentPath.startsWith("/keyboards/manage"))) ||
-            (currentPath === "/categories" || (currentPath.startsWith("/categories/") && !currentPath.startsWith("/categories/manage")));
+            (currentPath === "/keyboards" || (currentPath.startsWith("/keyboards/") && !currentPath.startsWith("/keyboards/manage")));
 
           if (!isPublicPath) {
             window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
@@ -96,4 +95,3 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-

@@ -2,6 +2,7 @@ import { apiClient } from "@/lib/api-client";
 import type { ApiResponse } from "@/types/api.types";
 import type {
   KeyboardDetail,
+  KeyboardLikeResult,
   KeyboardListParams,
   KeyboardListResult,
   KeyboardSort,
@@ -17,7 +18,7 @@ const sortMap: Record<KeyboardSort, string> = {
 };
 
 export const keyboardService = {
-  async getManagementList(params: { page?: number; limit?: number; search?: string; status?: string; platform?: string; categoryId?: string } = {}): Promise<PageResult<AdminKeyboard>> {
+  async getManagementList(params: { page?: number; limit?: number; search?: string; status?: string; platform?: string; categoryId?: string; colorId?: string; styleId?: string } = {}): Promise<PageResult<AdminKeyboard>> {
     const response = await apiClient.get<PageResult<AdminKeyboard>>("/keyboards/manage", { params });
     return response.data;
   },
@@ -52,6 +53,8 @@ export const keyboardService = {
         limit: params.limit ?? 12,
         search: params.search || undefined,
         category: params.category || undefined,
+        colors: params.colors?.length ? params.colors.join(",") : undefined,
+        styles: params.styles?.length ? params.styles.join(",") : undefined,
         platform: params.platform?.toUpperCase(),
         accessLevel: params.accessLevel,
         isFeatured: params.featured,
@@ -67,6 +70,13 @@ export const keyboardService = {
       `/keyboards/${encodeURIComponent(slug)}`,
     );
     return response.data.data;
+  },
+
+  async toggleLike(slug: string): Promise<KeyboardLikeResult> {
+    const response = await apiClient.post<{ success: boolean } & KeyboardLikeResult>(
+      `/keyboards/${encodeURIComponent(slug)}/like`,
+    );
+    return response.data;
   },
 
   async getUploadUrl(
@@ -150,5 +160,3 @@ export const keyboardService = {
     return results;
   },
 };
-
-
