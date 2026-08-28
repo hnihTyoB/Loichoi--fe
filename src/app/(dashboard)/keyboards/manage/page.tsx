@@ -16,6 +16,7 @@ import { categoryService } from "@/services/category.service";
 import { keyboardService } from "@/services/keyboard.service";
 import { colorService, styleService } from "@/services/taxonomy.service";
 import { useTranslation } from "@/hooks/use-translation";
+import { useDebounce } from "@/hooks/use-debounce";
 import { PERMISSIONS } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
 import type { AdminKeyboard, KeyboardPayload } from "@/types/admin.types";
@@ -24,6 +25,7 @@ export default function KeyboardManagementPage() {
   const { t, isMounted } = useTranslation();
   const client = useQueryClient();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [status, setStatus] = useState("");
   const [platform, setPlatform] = useState("");
   const [colorId, setColorId] = useState("");
@@ -35,8 +37,8 @@ export default function KeyboardManagementPage() {
   const [quotaUserId, setQuotaUserId] = useState("");
 
   const list = useQuery({
-    queryKey: ["keyboards", "manage", search, status, platform, colorId, styleId],
-    queryFn: () => keyboardService.getManagementList({ search: search || undefined, status: status || undefined, platform: platform || undefined, colorId: colorId || undefined, styleId: styleId || undefined, limit: 50 }),
+    queryKey: ["keyboards", "manage", debouncedSearch, status, platform, colorId, styleId],
+    queryFn: () => keyboardService.getManagementList({ search: debouncedSearch || undefined, status: status || undefined, platform: platform || undefined, colorId: colorId || undefined, styleId: styleId || undefined, limit: 50 }),
   });
   const categories = useQuery({
     queryKey: ["categories", "manage", "options"],

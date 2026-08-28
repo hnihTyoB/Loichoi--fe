@@ -46,10 +46,7 @@ export default function RoleDetailPage({ params }: { params: Promise<{ id: strin
   );
 
   const savePermissions = useMutation({
-    mutationFn: async () => {
-      if (selected.length) await rbacService.syncRolePermissions(id, selected);
-      else await Promise.all((role.data?.permissions ?? []).map((item) => rbacService.removeRolePermission(id, item.id)));
-    },
+    mutationFn: () => rbacService.syncRolePermissions(id, selected),
     onSuccess: () => {
       toast.success(isMounted ? t.adminRoles.saveMatrixSuccess : "Đã lưu ma trận quyền");
       client.invalidateQueries({ queryKey: ["roles"] });

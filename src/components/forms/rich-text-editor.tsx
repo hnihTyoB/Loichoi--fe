@@ -22,6 +22,9 @@ import {
   RemoveFormatting,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 export interface RichTextEditorProps {
   value?: string;
@@ -39,6 +42,8 @@ export function RichTextEditor({
   className,
 }: RichTextEditorProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("https://");
 
   useEffect(() => {
     setIsMounted(true);
@@ -56,37 +61,37 @@ export function RichTextEditor({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
+          class: "text-kawaii-mocha font-bold underline underline-offset-4 hover:text-primary transition-colors cursor-pointer",
           target: "_blank",
           rel: "noopener noreferrer",
-          class: "text-kawaii-babyblue font-bold underline transition hover:text-kawaii-warmbrown",
         },
       }),
       Placeholder.configure({
         placeholder,
+        emptyEditorClass: "is-editor-empty before:content-[attr(data-placeholder)] before:text-kawaii-mocha/40 before:float-left before:pointer-events-none before:h-0",
       }),
     ],
-    content: value || "",
+    content: value,
     editable: !disabled,
-    onUpdate: ({ editor: currentEditor }) => {
-      const html = currentEditor.getHTML();
-      // If empty paragraph, treat as empty string
-      const cleanHtml = currentEditor.isEmpty ? "" : html;
-      onChange?.(cleanHtml);
-    },
     editorProps: {
       attributes: {
         class: cn(
-          "min-h-[160px] max-h-[360px] w-full overflow-y-auto px-4 py-3 text-sm font-medium text-kawaii-mocha outline-none transition dark:text-foreground",
-          "prose-kawaii",
+          "prose prose-sm md:prose-base max-w-none focus:outline-none min-h-[140px] px-4 py-3 text-kawaii-mocha font-sans leading-relaxed",
+          "[&_h2]:text-lg [&_h2]:font-black [&_h2]:text-kawaii-mocha [&_h2]:mt-3 [&_h2]:mb-1",
+          "[&_h3]:text-base [&_h3]:font-bold [&_h3]:text-kawaii-mocha [&_h3]:mt-2 [&_h3]:mb-1",
+          "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2",
+          "[&_blockquote]:border-l-4 [&_blockquote]:border-kawaii-sky [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-kawaii-mocha/70",
+          "[&_p]:my-1.5",
         ),
       },
     },
+    onUpdate: ({ editor: ed }) => {
+      onChange?.(ed.getHTML());
+    },
   });
 
-  // Synchronize external value changes (e.g. form reset)
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
-      if (!value && editor.isEmpty) return;
       editor.commands.setContent(value || "", { emitUpdate: false });
     }
   }, [value, editor]);
@@ -97,18 +102,21 @@ export function RichTextEditor({
     }
   }, [disabled, editor]);
 
-  const setLink = () => {
+  const openLinkDialog = () => {
     if (!editor) return;
     const previousUrl = editor.getAttributes("link").href;
-    const url = window.prompt("Nhập địa chỉ URL liên kết (https://...):", previousUrl || "https://");
+    setLinkUrl(previousUrl || "https://");
+    setLinkOpen(true);
+  };
 
-    if (url === null) return;
-    if (url === "" || url === "https://") {
+  const handleApplyLink = () => {
+    if (!editor) return;
+    if (!linkUrl || linkUrl.trim() === "" || linkUrl === "https://") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
-      return;
+    } else {
+      editor.chain().focus().extendMarkRange("link").setLink({ href: linkUrl.trim() }).run();
     }
-
-    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+    setLinkOpen(false);
   };
 
   if (!isMounted || !editor) {
@@ -251,13 +259,11 @@ export function RichTextEditor({
           <Quote className="h-4 w-4" />
         </button>
 
-        <div className="mx-1 h-5 w-[1px] bg-kawaii-sky/60" />
-
         {/* Link */}
         <button
           type="button"
           disabled={disabled}
-          onClick={setLink}
+          onClick={openLinkDialog}
           aria-label="Chèn liên kết"
           title="Chèn liên kết"
           className={cn(
@@ -268,6 +274,7 @@ export function RichTextEditor({
           <Link2 className="h-4 w-4" />
         </button>
 
+        {/* Unlink */}
         {editor.isActive("link") && (
           <button
             type="button"
@@ -275,11 +282,13 @@ export function RichTextEditor({
             onClick={() => editor.chain().focus().unsetLink().run()}
             aria-label="Hủy liên kết"
             title="Hủy liên kết"
-            className="flex h-8 w-8 items-center justify-center rounded-xl text-destructive transition hover:bg-destructive/10"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-kawaii-mocha/80 transition hover:bg-kawaii-sky/40 hover:text-kawaii-mocha"
           >
             <Unlink className="h-4 w-4" />
           </button>
         )}
+
+        <div className="mx-1 h-5 w-[1px] bg-kawaii-sky/60" />
 
         {/* Clear formatting */}
         <button
@@ -322,6 +331,38 @@ export function RichTextEditor({
 
       {/* Editor Content Area */}
       <EditorContent editor={editor} />
+
+      {/* Accessible Link Dialog */}
+      <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-kawaii-mocha">Chèn liên kết</DialogTitle>
+            <DialogDescription>Nhập đường dẫn URL liên kết trang web (ví dụ: https://...)</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Input
+              type="url"
+              placeholder="https://example.com"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleApplyLink();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setLinkOpen(false)}>
+              Hủy
+            </Button>
+            <Button type="button" onClick={handleApplyLink}>
+              Áp dụng
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

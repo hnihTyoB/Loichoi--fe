@@ -35,7 +35,13 @@ const lines = (value: string) =>
     .split("\n")
     .map((item) => item.trim())
     .filter(Boolean);
-const localDate = (value?: string | null) => (value ? new Date(value).toISOString().slice(0, 16) : "");
+const toLocalDatetimeInput = (value?: string | null) => {
+  if (!value) return "";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "";
+  const offsetMs = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - offsetMs).toISOString().slice(0, 16);
+};
 
 export default function MaintenancePage() {
   const { t, isMounted } = useTranslation();
@@ -61,8 +67,8 @@ export default function MaintenancePage() {
         status: status.data.status === "READ_ONLY" ? "READ_ONLY" : "MAINTENANCE",
         title: status.data.title,
         message: status.data.message,
-        startAt: localDate(status.data.startAt),
-        estimatedEndAt: localDate(status.data.estimatedEndAt),
+        startAt: toLocalDatetimeInput(status.data.startAt),
+        estimatedEndAt: toLocalDatetimeInput(status.data.estimatedEndAt),
         bypassPermissions: status.data.bypassPermissions.join("\n"),
         bypassRoles: status.data.bypassRoles.join("\n"),
         bypassIps: status.data.bypassIps.join("\n"),

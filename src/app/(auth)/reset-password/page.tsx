@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, KeyRound, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,13 @@ import {
 } from "@/components/ui/card";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useTranslation } from "@/hooks/use-translation";
+import { authService } from "@/services/auth.service";
+import { getErrorMessage } from "@/lib/errors";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token") || "";
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,16 +30,25 @@ export default function ResetPasswordPage() {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) {
+      toast.error("Liên kết đặt lại mật khẩu không hợp lệ hoặc thiếu mã token.");
+      return;
+    }
     if (password !== confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp!");
+      toast.error(isMounted ? t.profile.passwordMismatch : "Mật khẩu xác nhận không khớp!");
+      return;
+    }
+    if (password.length < 8) {
+      toast.error("Mật khẩu mới phải có tối thiểu 8 ký tự.");
       return;
     }
     setIsLoading(true);
     try {
-      toast.success("Mật khẩu đã được đổi mới thành công.");
-      window.location.href = "/login";
-    } catch {
-      toast.error("Đặt lại mật khẩu thất bại.");
+      await authService.resetPassword({ token, newPassword: password });
+      toast.success(isMounted ? t.profile.passwordUpdatedSuccess : "Mật khẩu đã được đổi mới thành công. Vui lòng đăng nhập.");
+      router.push("/login");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -95,5 +110,19 @@ export default function ResetPasswordPage() {
         </Link>
       </CardFooter>
     </Card>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <Card className="rounded-[2.5rem] border-2 border-kawaii-sky/60 bg-card/95 p-8 text-center shadow-cloud">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-kawaii-babyblue border-t-transparent mx-auto" />
+        </Card>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

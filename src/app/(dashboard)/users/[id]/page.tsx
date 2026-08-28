@@ -11,25 +11,30 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/use-translation";
 
+import { PermissionGate } from "@/components/shared/permission-gate";
+import { AsyncState } from "@/components/shared/admin-ui";
+import { PERMISSIONS } from "@/lib/constants";
+
 export default function UserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { t, isMounted } = useTranslation();
 
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading, isError } = useQuery({
     queryKey: ["users", id],
     queryFn: () => userService.getUserById(id),
   });
 
   if (isLoading) {
-    return (
-      <div className="py-12 text-center text-muted-foreground">
-        {isMounted ? t.users.loading : "Đang tải thông tin người dùng..."}
-      </div>
-    );
+    return <AsyncState loading />;
+  }
+
+  if (isError || !user) {
+    return <AsyncState error />;
   }
 
   return (
-    <div className="space-y-6">
+    <PermissionGate permission={PERMISSIONS.USER_READ} fallback={<AsyncState error />}>
+      <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/users">
           <Button variant="ghost" size="icon" className="rounded-full">
@@ -85,6 +90,7 @@ export default function UserDetailPage({ params }: { params: Promise<{ id: strin
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </PermissionGate>
   );
 }

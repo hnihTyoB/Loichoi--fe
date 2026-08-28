@@ -16,11 +16,13 @@ export function useAuth() {
 
   useEffect(() => {
     if (query.data) {
-      setUser(query.data);
-    } else if (query.isError) {
+      if (!user || user.id !== query.data.id || user.updatedAt !== query.data.updatedAt || user.avatarUrl !== query.data.avatarUrl) {
+        setUser(query.data);
+      }
+    } else if (query.isError && user !== null) {
       setUser(null);
     }
-  }, [query.data, query.isError, setUser]);
+  }, [query.data, query.isError, user, setUser]);
 
   return {
     user: query.data || user,

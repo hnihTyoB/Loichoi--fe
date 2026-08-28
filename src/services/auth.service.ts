@@ -76,6 +76,14 @@ export const authService = {
     await apiClient.put("/auth/password", payload);
   },
 
+  async forgotPassword(email: string): Promise<void> {
+    await apiClient.post("/auth/forgot-password", { email });
+  },
+
+  async resetPassword(payload: { token: string; newPassword: string }): Promise<void> {
+    await apiClient.post("/auth/reset-password", payload);
+  },
+
   async getSessions(): Promise<ActiveSession[]> {
     const res = await apiClient.get<ApiResponse<ActiveSession[]>>("/auth/sessions");
     return res.data.data;

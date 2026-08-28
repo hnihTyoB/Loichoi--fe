@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/hooks/use-translation";
+import { useDebounce } from "@/hooks/use-debounce";
 import { PERMISSIONS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import { systemService } from "@/services/system.service";
@@ -60,16 +61,19 @@ export default function AuditLogsPage() {
   const [action, setAction] = useState("");
   const [targetType, setTargetType] = useState("");
   const [actorId, setActorId] = useState("");
+  const debouncedAction = useDebounce(action, 300);
+  const debouncedTargetType = useDebounce(targetType, 300);
+  const debouncedActorId = useDebounce(actorId, 300);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<AuditLog | null>(null);
 
   const logs = useQuery({
-    queryKey: ["audit-logs", action, targetType, actorId, page],
+    queryKey: ["audit-logs", debouncedAction, debouncedTargetType, debouncedActorId, page],
     queryFn: () =>
       systemService.getAuditLogs({
-        action: action || undefined,
-        targetType: targetType || undefined,
-        actorId: actorId || undefined,
+        action: debouncedAction || undefined,
+        targetType: debouncedTargetType || undefined,
+        actorId: debouncedActorId || undefined,
         page,
         limit: 20,
       }),

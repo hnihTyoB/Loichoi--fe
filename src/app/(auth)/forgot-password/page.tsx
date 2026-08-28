@@ -16,6 +16,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { useTranslation } from "@/hooks/use-translation";
 
+import { authService } from "@/services/auth.service";
+import { getErrorMessage } from "@/lib/errors";
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,12 +27,14 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim()) return;
     setIsLoading(true);
     try {
-      toast.success("Thư khôi phục đã được gửi tới hòm thư của bạn.");
+      await authService.forgotPassword(email.trim());
+      toast.success(isMounted ? t.auth.emailSentTitle : "Thư khôi phục đã được gửi tới hòm thư của bạn.");
       setIsSent(true);
-    } catch {
-      toast.error("Gửi yêu cầu thất bại.");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }

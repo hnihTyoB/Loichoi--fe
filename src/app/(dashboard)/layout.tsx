@@ -24,11 +24,12 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!isPublicRoute && !isLoading && !isAuthenticated) {
-      router.replace("/login");
+      const redirectUrl = pathname ? `/login?redirect=${encodeURIComponent(pathname)}` : "/login";
+      router.replace(redirectUrl);
     }
-  }, [isAuthenticated, isLoading, isPublicRoute, router]);
+  }, [isAuthenticated, isLoading, isPublicRoute, pathname, router]);
 
-  if (!isPublicRoute && isLoading) {
+  if (!isPublicRoute && (isLoading || !isAuthenticated)) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-kawaii-cream gap-4">
         <div className="animate-bounce-subtle">

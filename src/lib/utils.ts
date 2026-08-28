@@ -5,13 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: string | Date | null | undefined): string {
+export function formatDate(
+  date: string | Date | null | undefined,
+  options?: Intl.DateTimeFormatOptions,
+): string {
   if (!date) return "";
   const d = typeof date === "string" ? new Date(date) : date;
   return new Intl.DateTimeFormat("vi-VN", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
+    timeZone: "Asia/Ho_Chi_Minh",
+    ...options,
   }).format(d);
 }
 

@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useTranslation } from "@/hooks/use-translation";
+import { useDebounce } from "@/hooks/use-debounce";
 import { PERMISSIONS } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
 import { formatDate } from "@/lib/utils";
@@ -40,10 +41,12 @@ export default function UsersPage() {
   const { t, isMounted } = useTranslation();
   const client = useQueryClient();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [searchField, setSearchField] = useState<"email" | "fullName">("email");
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
   const [roleId, setRoleId] = useState("");
+  const [isActive, setIsActive] = useState(true);
   const [deleting, setDeleting] = useState<User | null>(null);
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
@@ -51,8 +54,8 @@ export default function UsersPage() {
   });
 
   const list = useQuery({
-    queryKey: ["users", "list", searchField, search],
-    queryFn: () => userService.getUsers({ [searchField]: search || undefined, limit: 100 }),
+    queryKey: ["users", "list", searchField, debouncedSearch],
+    queryFn: () => userService.getUsers({ [searchField]: debouncedSearch || undefined, limit: 100 }),
   });
   const roles = useQuery({ queryKey: ["roles", "list"], queryFn: rbacService.getRoles });
   const users = list.data?.data ?? [];
@@ -95,6 +98,7 @@ export default function UsersPage() {
   const openEdit = (user: User) => {
     setEditing(user);
     setRoleId(user.roleId);
+    setIsActive(user.isActive);
   };
 
   return (
@@ -254,6 +258,16 @@ export default function UsersPage() {
                 ))}
               </select>
             </Field>
+            <Field label={isMounted ? t.adminUsers.colStatus : "Trạng thái truy cập"}>
+              <select
+                className={selectClassName}
+                value={isActive ? "ACTIVE" : "LOCKED"}
+                onChange={(event) => setIsActive(event.target.value === "ACTIVE")}
+              >
+                <option value="ACTIVE">{isMounted ? t.adminUsers.statusActive : "Hoạt động"}</option>
+                <option value="LOCKED">{isMounted ? t.adminUsers.statusLocked : "Đã khóa"}</option>
+              </select>
+            </Field>
             <div className="rounded-2xl border-2 border-kawaii-sky/35 bg-kawaii-cloud/25 p-4">
               <p className="flex items-center gap-2 text-sm font-bold text-kawaii-mocha">
                 <LockKeyhole className="h-4 w-4" />
@@ -269,13 +283,11 @@ export default function UsersPage() {
               </Button>
               <Button
                 disabled={!editing || update.isPending}
-                onClick={() => editing && update.mutate({ user: editing, active: !editing.isActive, nextRole: roleId })}
+                onClick={() => editing && update.mutate({ user: editing, active: isActive, nextRole: roleId })}
               >
                 {update.isPending
                   ? (isMounted ? t.adminUi.saving : "Đang lưu...")
-                  : isMounted
-                    ? `${editing?.isActive ? t.adminUsers.lockAndSave : t.adminUsers.unlockAndSave}`
-                    : `${editing?.isActive ? "Khóa" : "Mở khóa"} và lưu vai trò`}
+                  : (isMounted ? t.adminUi.save : "Lưu thay đổi")}
               </Button>
             </DialogFooter>
           </DialogContent>
