@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, selectClassName } from "@/components/shared/admin-ui";
 import { ThemeImageUploader } from "@/components/forms/theme-image-uploader";
+import { RichTextEditor } from "@/components/forms/rich-text-editor";
 import { useTranslation } from "@/hooks/use-translation";
 import { isSupportedDownloadUrl } from "@/lib/download-url";
 import type { AdminCategory, AdminKeyboard, KeyboardPayload } from "@/types/admin.types";
@@ -18,7 +19,7 @@ import type { KeyboardColor, KeyboardStyle } from "@/types/keyboard.types";
 const schema = z.object({
   name: z.string().min(3, "Tên cần ít nhất 3 ký tự").max(150),
   slug: z.string().regex(/^$|^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug chỉ gồm chữ thường, số và dấu gạch ngang"),
-  description: z.string().max(2000),
+  description: z.string().max(20000),
   coverUrl: z.string().url("Vui lòng tải lên hoặc chọn ảnh bìa hợp lệ"),
   driveUrl: z.string().url("URL tải xuống không hợp lệ").refine(isSupportedDownloadUrl, "Cần dùng URL HTTPS của Google Drive hoặc Discord"),
   platform: z.enum(["IOS", "ANDROID", "BOTH"]),
@@ -163,7 +164,12 @@ export function KeyboardFormDialog({
             </Field>
           </div>
           <Field label={isMounted ? t.adminKeyboards.formDescription : "Mô tả"} error={errors.description?.message}>
-            <Textarea {...register("description")} />
+            <RichTextEditor
+              value={watch("description")}
+              onChange={(val) => setValue("description", val, { shouldValidate: true })}
+              disabled={busy}
+              placeholder={isMounted ? "Nhập mô tả chi tiết, hướng dẫn cài đặt và thông tin theme..." : "Nhập mô tả chi tiết, hướng dẫn cài đặt và thông tin theme..."}
+            />
           </Field>
           <Field label={isMounted ? t.adminKeyboards.formDriveUrl : "URL tải xuống"} error={errors.driveUrl?.message}>
             <Input {...register("driveUrl")} placeholder="https://discord.com/channels/..." />

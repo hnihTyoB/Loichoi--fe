@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function KeyboardsPage() {
   return (
-    <Suspense fallback={<KeyboardGridSkeleton />}>
+    <Suspense fallback={<KeyboardGridSkeleton count={30} />}>
       <ExploreContent />
     </Suspense>
   );

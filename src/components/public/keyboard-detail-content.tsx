@@ -8,6 +8,7 @@ import { AlertTriangle, ArrowLeft, Download, Heart, Images, MonitorSmartphone, S
 import { toast } from "sonner";
 import { DownloadButton, type DownloadState } from "@/components/public/download-button";
 import { KeyboardGrid, KeyboardGridSkeleton } from "@/components/public/keyboard-grid";
+import { RichTextContent } from "@/components/public/rich-text-content";
 import { StatePanel } from "@/components/public/state-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -225,9 +226,9 @@ export function KeyboardDetailContent({ slug, initialData, downloadState }: { sl
 
       <section className="rounded-[2.5rem] border-2 border-kawaii-sky/45 bg-kawaii-cloud/30 p-6 md:p-9">
         <h2 className="text-2xl font-black text-kawaii-mocha">{text.detail.about}</h2>
-        <p className="mt-4 whitespace-pre-line text-sm font-medium leading-7 text-kawaii-mocha/75 md:text-base">
-          {item.description || text.detail.noDescription}
-        </p>
+        <div className="mt-4">
+          <RichTextContent content={item.description} fallback={text.detail.noDescription} />
+        </div>
       </section>
 
       <section>

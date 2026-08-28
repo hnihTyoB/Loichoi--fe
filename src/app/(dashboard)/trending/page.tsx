@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function TrendingPage() {
   return (
-    <Suspense fallback={<KeyboardGridSkeleton />}>
+    <Suspense fallback={<KeyboardGridSkeleton count={30} />}>
       <ExploreContent mode="trending" />
     </Suspense>
   );

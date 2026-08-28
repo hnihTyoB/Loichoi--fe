@@ -13,8 +13,9 @@ import {
   Heart,
   Home,
   KeyRound,
+  Keyboard,
+  Paintbrush,
   Palette,
-  Settings,
   ShieldCheck,
   Sparkles,
   Users,
@@ -23,7 +24,7 @@ import { BrandLogo } from "./brand-logo";
 import { PermissionGate } from "./permission-gate";
 import { useTranslation } from "@/hooks/use-translation";
 import { PERMISSIONS } from "@/lib/constants";
-import { DASHBOARD_ACCESS_PERMISSIONS, SETTINGS_ACCESS_PERMISSIONS } from "@/lib/dashboard-access";
+import { DASHBOARD_ACCESS_PERMISSIONS } from "@/lib/dashboard-access";
 import { cn } from "@/lib/utils";
 import { useUiStore } from "@/stores/ui-store";
 import type { TranslationKeys } from "@/lib/i18n";
@@ -42,7 +43,7 @@ interface NavItemConfig {
 
 const navItems: NavItemConfig[] = [
   { href: "/dashboard", icon: Home, permissions: DASHBOARD_ACCESS_PERMISSIONS, key: "dashboard", fallbackVi: "Tổng quan", fallbackEn: "Dashboard" },
-  { href: "/keyboards/manage", icon: Palette, permission: PERMISSIONS.KEYBOARD_READ, key: "keyboardsManage", fallbackVi: "Quản trị theme", fallbackEn: "Theme Management" },
+  { href: "/keyboards/manage", icon: Keyboard, permission: PERMISSIONS.KEYBOARD_READ, key: "keyboardsManage", fallbackVi: "Quản trị theme", fallbackEn: "Theme Management" },
   { href: "/categories/manage", icon: FolderTree, permission: PERMISSIONS.CATEGORY_READ, key: "categoriesManage", fallbackVi: "Quản trị danh mục", fallbackEn: "Category Management" },
   { href: "/colors/manage", icon: Palette, permission: PERMISSIONS.COLOR_READ, key: "colorsManage", fallbackVi: "Quản trị màu sắc", fallbackEn: "Color Management" },
   { href: "/styles/manage", icon: Sparkles, permission: PERMISSIONS.STYLE_READ, key: "stylesManage", fallbackVi: "Quản trị phong cách", fallbackEn: "Style Management" },
@@ -51,19 +52,11 @@ const navItems: NavItemConfig[] = [
   { href: "/roles", icon: ShieldCheck, permission: PERMISSIONS.ROLE_READ, key: "roles", fallbackVi: "Vai trò và quyền", fallbackEn: "Roles & Permissions" },
   { href: "/audit-logs", icon: ClipboardList, permission: PERMISSIONS.AUDIT_LOG_READ, key: "auditLogs", fallbackVi: "Nhật ký kiểm toán", fallbackEn: "Audit Logs" },
   { href: "/notifications", icon: Bell, permission: PERMISSIONS.NOTIFICATION_READ, key: "notifications", fallbackVi: "Thông báo", fallbackEn: "Notifications" },
-  { href: "/studio", icon: Palette, permission: PERMISSIONS.STUDIO_ACCESS, key: "studio", fallbackVi: "Creator Studio", fallbackEn: "Creator Studio" },
+  { href: "/studio", icon: Paintbrush, permission: PERMISSIONS.STUDIO_ACCESS, key: "studio", fallbackVi: "Creator Studio", fallbackEn: "Creator Studio" },
   { href: "/settings/integrations", icon: KeyRound, permissions: [PERMISSIONS.API_KEY_READ, PERMISSIONS.WEBHOOK_READ], key: "integrations", fallbackVi: "API và Webhook", fallbackEn: "API & Webhooks" },
   { href: "/settings/system", icon: Flag, permission: PERMISSIONS.SYSTEM_CONFIG_READ, key: "systemConfig", fallbackVi: "Cấu hình hệ thống", fallbackEn: "System Configuration" },
   { href: "/settings/maintenance", icon: Construction, permissions: [PERMISSIONS.MAINTENANCE_READ, PERMISSIONS.MAINTENANCE_MANAGE], key: "maintenance", fallbackVi: "Bảo trì", fallbackEn: "Maintenance" },
   { href: "/settings/cron", icon: CalendarClock, permission: PERMISSIONS.CRON_JOB_READ, key: "cronJobs", fallbackVi: "Tác vụ định kỳ", fallbackEn: "Scheduled Jobs" },
-  {
-    href: "/settings",
-    icon: Settings,
-    permissions: SETTINGS_ACCESS_PERMISSIONS,
-    key: "settings",
-    fallbackVi: "Cài đặt",
-    fallbackEn: "Settings",
-  },
 ];
 
 export function Sidebar() {

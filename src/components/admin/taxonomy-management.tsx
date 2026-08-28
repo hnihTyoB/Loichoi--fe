@@ -24,6 +24,21 @@ type TaxonomyKind = "color" | "style";
 type TaxonomyItem = AdminColor | AdminStyle;
 
 const hexRegex = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+function toPickerHex(hex: string): string {
+  if (/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
+  if (/^#[0-9a-fA-F]{3}$/.test(hex)) {
+    const r = hex[1];
+    const g = hex[2];
+    const b = hex[3];
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+  if (/^#[0-9a-fA-F]{8}$/.test(hex)) {
+    return hex.slice(0, 7);
+  }
+  return "#CDE4FE";
+}
+
 const schema = z.object({
   name: z.string().trim().min(2, "Tên cần ít nhất 2 ký tự").max(50),
   slug: z.string().regex(/^$|^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug không hợp lệ"),
@@ -51,7 +66,7 @@ export function TaxonomyManagement({ kind }: { kind: TaxonomyKind }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<TaxonomyItem | null>(null);
   const [deleting, setDeleting] = useState<TaxonomyItem | null>(null);
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<Values>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { name: "", slug: "", hex: "#CDE4FE", description: "", kind },
   });
@@ -187,7 +202,22 @@ export function TaxonomyManagement({ kind }: { kind: TaxonomyKind }) {
               {isColor ? (
                 <Field label={copy.hexLabel} error={errors.hex?.message}>
                   <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 shrink-0 rounded-2xl border-2 border-kawaii-sky/60 shadow-inner" style={{ backgroundColor: hexRegex.test(currentHex) ? currentHex : "transparent" }} />
+                    <label
+                      className="group relative flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-kawaii-sky/60 shadow-inner transition-all hover:scale-105 hover:border-kawaii-babyblue focus-within:ring-2 focus-within:ring-primary/40"
+                      title={isMounted ? "Chọn màu từ bảng màu" : "Chọn màu từ bảng màu"}
+                    >
+                      <span
+                        className="h-full w-full"
+                        style={{ backgroundColor: hexRegex.test(currentHex) ? currentHex : "transparent" }}
+                      />
+                      <input
+                        type="color"
+                        value={toPickerHex(currentHex)}
+                        onChange={(event) => setValue("hex", event.target.value.toUpperCase(), { shouldValidate: true })}
+                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        aria-label={copy.hexLabel}
+                      />
+                    </label>
                     <Input {...register("hex")} placeholder="#CDE4FE" className="font-mono uppercase" />
                   </div>
                 </Field>

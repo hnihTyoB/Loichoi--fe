@@ -84,7 +84,7 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
   const [searchInput, setSearchInput] = useState(filters.search);
   useEffect(() => setSearchInput(filters.search), [filters.search]);
 
-  const query = useKeyboards({ ...filters, limit: 8 });
+  const query = useKeyboards({ ...filters, limit: 30 });
 
   function updateUrl(values: Record<string, string | number | undefined>, resetPage = true) {
     const next = new URLSearchParams(searchParams.toString());
@@ -286,7 +286,7 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
         ) : null}
       </div>
 
-      {query.isLoading ? <KeyboardGridSkeleton /> : null}
+      {query.isLoading ? <KeyboardGridSkeleton count={30} /> : null}
       {query.isError ? (
         <StatePanel
           icon={AlertTriangle}
