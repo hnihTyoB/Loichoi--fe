@@ -24,7 +24,7 @@ const copy = {
       trending: "Đang thịnh hành",
       trendingDesc: "Các giao diện có nhiều lượt tải nhất gần đây.",
       discordTitle: "Cùng nhau làm bàn phím đẹp hơn",
-      discordDesc: "Tham gia Discord để nhận theme cộng đồng, chia sẻ màn hình bàn phím và gặp các creator.",
+      discordDesc: "Tham gia Discord để nhận theme, chia sẻ bàn phím và gặp các creator.",
       discordAction: "Tham gia Discord",
     },
     explore: {

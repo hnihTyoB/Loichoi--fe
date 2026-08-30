@@ -7,6 +7,7 @@ import {
   Boxes,
   CalendarClock,
   ClipboardList,
+  CloudUpload,
   Construction,
   Flag,
   FolderTree,
@@ -44,6 +45,7 @@ interface NavItemConfig {
 const navItems: NavItemConfig[] = [
   { href: "/dashboard", icon: Home, permissions: DASHBOARD_ACCESS_PERMISSIONS, key: "dashboard", fallbackVi: "Tổng quan", fallbackEn: "Dashboard" },
   { href: "/keyboards/manage", icon: Keyboard, permission: PERMISSIONS.KEYBOARD_READ, key: "keyboardsManage", fallbackVi: "Quản trị theme", fallbackEn: "Theme Management" },
+  { href: "/imports", icon: CloudUpload, permission: PERMISSIONS.IMPORT_READ, key: "imports", fallbackVi: "Discord Imports", fallbackEn: "Discord Imports" },
   { href: "/categories/manage", icon: FolderTree, permission: PERMISSIONS.CATEGORY_READ, key: "categoriesManage", fallbackVi: "Quản trị danh mục", fallbackEn: "Category Management" },
   { href: "/colors/manage", icon: Palette, permission: PERMISSIONS.COLOR_READ, key: "colorsManage", fallbackVi: "Quản trị màu sắc", fallbackEn: "Color Management" },
   { href: "/styles/manage", icon: Sparkles, permission: PERMISSIONS.STYLE_READ, key: "stylesManage", fallbackVi: "Quản trị phong cách", fallbackEn: "Style Management" },

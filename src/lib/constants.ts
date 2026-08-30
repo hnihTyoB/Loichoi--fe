@@ -58,7 +58,11 @@ export const PERMISSIONS = {
   COLLECTION_DELETE: "COLLECTION_DELETE",
   STUDIO_ACCESS: "STUDIO_ACCESS",
   CREATOR_MANAGE: "CREATOR_MANAGE",
+  IMPORT_READ: "IMPORT_READ",
+  IMPORT_MANAGE: "IMPORT_MANAGE",
+  IMPORT_APPROVE: "IMPORT_APPROVE",
 } as const;
+
 
 export type PermissionKey = keyof typeof PERMISSIONS;
 export type PermissionValue = (typeof PERMISSIONS)[PermissionKey];
