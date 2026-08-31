@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit3, Keyboard, Plus, RefreshCcw, Search, Trash2 } from "lucide-react";
+import { Edit3, Keyboard, Plus, RefreshCcw, Search, Trash2, CheckCheck, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { PermissionGate } from "@/components/shared/permission-gate";
 import { AsyncState, ConfirmDialog, Field, PageHeader, selectClassName } from "@/components/shared/admin-ui";
@@ -33,6 +34,8 @@ export default function KeyboardManagementPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AdminKeyboard | null>(null);
   const [deleting, setDeleting] = useState<AdminKeyboard | null>(null);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [quotaOpen, setQuotaOpen] = useState(false);
   const [quotaUserId, setQuotaUserId] = useState("");
 
@@ -53,7 +56,31 @@ export default function KeyboardManagementPage() {
     queryFn: styleService.getPublicList,
   });
 
-  const refresh = () => client.invalidateQueries({ queryKey: ["keyboards", "manage"] });
+  const items = list.data?.data ?? [];
+  const allSelected = items.length > 0 && items.every((item) => selectedIds.has(item.id));
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map((item) => item.id)));
+    }
+  };
+
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const refresh = () => {
+    client.invalidateQueries({ queryKey: ["keyboards", "manage"] });
+    setSelectedIds(new Set());
+  };
+
   const save = useMutation({
     mutationFn: ({ payload, id }: { payload: KeyboardPayload; id?: string }) =>
       id ? keyboardService.update(id, payload) : keyboardService.create(payload),
@@ -71,6 +98,16 @@ export default function KeyboardManagementPage() {
     onSuccess: () => {
       toast.success(isMounted ? t.adminKeyboards.deletedSuccess : "Đã xóa hoặc lưu trữ theme");
       setDeleting(null);
+      refresh();
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+  const bulkRemove = useMutation({
+    mutationFn: (ids: string[]) => keyboardService.bulkDelete(ids),
+    onSuccess: (data) => {
+      toast.success(`Đã xóa thành công ${data.totalDeleted}/${data.totalRequested} theme đã chọn`);
+      setBulkDeleting(false);
       refresh();
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -103,29 +140,91 @@ export default function KeyboardManagementPage() {
           title={isMounted ? t.adminKeyboards.title : "Quản trị theme bàn phím"}
           description={isMounted ? t.adminKeyboards.description : "Duyệt, xuất bản và quản lý quyền truy cập của toàn bộ theme."}
           actions={
-            <>
+            <div className="flex items-center gap-2">
+              <PermissionGate permission={PERMISSIONS.KEYBOARD_DELETE}>
+                {selectedIds.size > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                  >
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="h-10 rounded-2xl font-bold bouncy-hover"
+                      onClick={() => setBulkDeleting(true)}
+                      disabled={bulkRemove.isPending}
+                    >
+                      {bulkRemove.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4 mr-1.5" />
+                      )}
+                      Xóa {selectedIds.size} mục đã chọn
+                    </Button>
+                  </motion.div>
+                )}
+              </PermissionGate>
               <PermissionGate permission={PERMISSIONS.KEYBOARD_UPDATE}>
-                <Button variant="outline" onClick={() => setQuotaOpen(true)}>
-                  <RefreshCcw />
+                <Button variant="outline" className="h-10 rounded-2xl text-xs font-bold bouncy-hover" onClick={() => setQuotaOpen(true)}>
+                  <RefreshCcw className="h-4 w-4 mr-1.5" />
                   {isMounted ? t.adminKeyboards.resetQuota : "Đặt lại quota"}
                 </Button>
               </PermissionGate>
               <PermissionGate permission={PERMISSIONS.KEYBOARD_CREATE}>
-                <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
-                  <Plus />
+                <Button className="h-10 rounded-2xl bg-kawaii-babyblue hover:bg-kawaii-babyblue/90 text-white font-bold bouncy-hover" onClick={() => { setEditing(null); setFormOpen(true); }}>
+                  <Plus className="h-4 w-4 mr-1.5" />
                   {isMounted ? t.adminKeyboards.createTheme : "Tạo theme"}
                 </Button>
               </PermissionGate>
-            </>
+            </div>
           }
         />
-        <Card>
+
+        {/* ─── Bulk selection banner ─── */}
+        <AnimatePresence>
+          {selectedIds.size > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              className="flex items-center justify-between px-4 py-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800"
+            >
+              <div className="flex items-center gap-2 text-xs font-bold">
+                <CheckCheck className="h-4 w-4 text-rose-600" />
+                <span>Đã chọn {selectedIds.size} giao diện bàn phím</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs font-semibold text-rose-700 hover:bg-rose-100 rounded-xl"
+                  onClick={() => setSelectedIds(new Set())}
+                >
+                  Bỏ chọn
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 text-xs font-bold rounded-xl gap-1"
+                  onClick={() => setBulkDeleting(true)}
+                  disabled={bulkRemove.isPending}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Xóa tất cả mục đã chọn
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <Card className="rounded-3xl border-2 border-kawaii-sky/30 shadow-[0_4px_20px_rgba(162,207,254,0.12)]">
           <CardContent className="pt-6 md:pt-8">
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_160px_160px_180px_180px]">
               <label className="relative">
                 <Search className="absolute left-4 top-3.5 h-4 w-4 text-kawaii-mocha/45" />
                 <Input
-                  className="pl-10"
+                  className="pl-10 h-11 rounded-2xl border-2 border-input bg-kawaii-cloud/30"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder={isMounted ? t.adminKeyboards.searchPlaceholder : "Tìm tên hoặc slug..."}
@@ -157,65 +256,95 @@ export default function KeyboardManagementPage() {
         <AsyncState
           loading={list.isLoading}
           error={list.isError}
-          empty={!list.isLoading && !list.isError && !list.data?.data.length}
+          empty={!list.isLoading && !list.isError && !items.length}
           emptyText={isMounted ? t.adminKeyboards.noKeyboards : "Chưa có theme phù hợp bộ lọc"}
         />
-        {list.data?.data.length ? (
-          <Card>
-            <CardContent className="overflow-x-auto pt-6 md:pt-8">
+        {items.length ? (
+          <Card className="rounded-3xl border-2 border-kawaii-sky/30 overflow-hidden shadow-[0_4px_20px_rgba(162,207,254,0.12)]">
+            <CardContent className="overflow-x-auto p-0">
               <table className="w-full min-w-[850px] text-left text-sm">
                 <thead>
-                  <tr className="border-b-2 border-kawaii-sky/40 text-xs text-kawaii-mocha/65">
-                    <th className="p-3">{isMounted ? t.adminKeyboards.thTheme : "Theme"}</th>
-                    <th className="p-3">{isMounted ? t.adminKeyboards.thStatus : "Trạng thái"}</th>
-                    <th className="p-3">{isMounted ? t.adminKeyboards.thAccess : "Truy cập"}</th>
-                    <th className="p-3">{isMounted ? t.adminKeyboards.thPlatform : "Nền tảng"}</th>
-                    <th className="p-3">{isMounted ? t.adminKeyboards.thPerformance : "Hiệu suất"}</th>
-                    <th className="p-3 text-right">{isMounted ? t.adminKeyboards.thActions : "Thao tác"}</th>
+                  <tr className="border-b-2 border-kawaii-sky/40 text-xs text-kawaii-mocha/65 bg-kawaii-cloud/30">
+                    <PermissionGate permission={PERMISSIONS.KEYBOARD_DELETE}>
+                      <th className="p-3.5 w-12 text-center">
+                        <input
+                          type="checkbox"
+                          checked={allSelected}
+                          onChange={toggleAll}
+                          aria-label="Chọn tất cả"
+                          className="h-4 w-4 rounded border-kawaii-sky text-kawaii-babyblue focus:ring-kawaii-sky cursor-pointer"
+                        />
+                      </th>
+                    </PermissionGate>
+                    <th className="p-3.5">{isMounted ? t.adminKeyboards.thTheme : "Theme"}</th>
+                    <th className="p-3.5">{isMounted ? t.adminKeyboards.thStatus : "Trạng thái"}</th>
+                    <th className="p-3.5">{isMounted ? t.adminKeyboards.thAccess : "Truy cập"}</th>
+                    <th className="p-3.5">{isMounted ? t.adminKeyboards.thPlatform : "Nền tảng"}</th>
+                    <th className="p-3.5">{isMounted ? t.adminKeyboards.thPerformance : "Hiệu suất"}</th>
+                    <th className="p-3.5 text-right">{isMounted ? t.adminKeyboards.thActions : "Thao tác"}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-kawaii-sky/20">
-                  {list.data.data.map((item) => (
-                    <tr key={item.id} className="hover:bg-kawaii-cloud/30">
-                      <td className="p-3">
-                        <div className="font-bold text-kawaii-mocha">{item.name}</div>
-                        <div className="text-xs text-kawaii-mocha/55">
-                          {item.slug} · {item.categoryNames.join(", ") || (isMounted ? t.adminKeyboards.unclassified : "Chưa phân loại")}
-                        </div>
-                        {(item.colorNames.length || item.styleNames.length) ? (
-                          <div className="mt-1 text-xs font-semibold text-kawaii-warmbrown">
-                            {[...item.colorNames, ...item.styleNames].join(" · ")}
+                <tbody className="divide-y divide-kawaii-sky/15">
+                  {items.map((item) => {
+                    const isSelected = selectedIds.has(item.id);
+                    return (
+                      <tr
+                        key={item.id}
+                        className={`transition-colors hover:bg-kawaii-cloud/30 ${
+                          isSelected ? "bg-kawaii-sky/15" : ""
+                        }`}
+                      >
+                        <PermissionGate permission={PERMISSIONS.KEYBOARD_DELETE}>
+                          <td className="p-3.5 text-center">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleOne(item.id)}
+                              aria-label={`Chọn ${item.name}`}
+                              className="h-4 w-4 rounded border-kawaii-sky text-kawaii-babyblue focus:ring-kawaii-sky cursor-pointer"
+                            />
+                          </td>
+                        </PermissionGate>
+                        <td className="p-3.5">
+                          <div className="font-bold text-kawaii-mocha">{item.name}</div>
+                          <div className="text-xs text-kawaii-mocha/55">
+                            {item.slug} · {item.categoryNames.join(", ") || (isMounted ? t.adminKeyboards.unclassified : "Chưa phân loại")}
                           </div>
-                        ) : null}
-                      </td>
-                      <td className="p-3">
-                        <Badge variant={item.status === "PUBLISHED" ? "default" : item.status === "HIDDEN" ? "destructive" : "secondary"}>
-                          {item.status}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <Badge variant="outline">{item.accessLevel}</Badge>
-                      </td>
-                      <td className="p-3 text-kawaii-mocha/70">{item.platform}</td>
-                      <td className="p-3 text-xs text-kawaii-mocha/65">
-                        {item.downloadCount} {isMounted ? t.adminKeyboards.downloads : "lượt tải"} · {item.likeCount} {isMounted ? t.adminKeyboards.likes : "lượt thích"}
-                      </td>
-                      <td className="p-3">
-                        <div className="flex justify-end gap-2">
-                          <PermissionGate permission={PERMISSIONS.KEYBOARD_UPDATE}>
-                            <Button variant="outline" size="icon" aria-label={isMounted ? t.adminUi.edit : "Chỉnh sửa"} onClick={() => edit(item)}>
-                              <Edit3 />
-                            </Button>
-                          </PermissionGate>
-                          <PermissionGate permission={PERMISSIONS.KEYBOARD_DELETE}>
-                            <Button variant="destructive" size="icon" aria-label={isMounted ? t.adminUi.delete : "Xóa"} onClick={() => setDeleting(item)}>
-                              <Trash2 />
-                            </Button>
-                          </PermissionGate>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                          {(item.colorNames.length || item.styleNames.length) ? (
+                            <div className="mt-1 text-xs font-semibold text-kawaii-warmbrown">
+                              {[...item.colorNames, ...item.styleNames].join(" · ")}
+                            </div>
+                          ) : null}
+                        </td>
+                        <td className="p-3.5">
+                          <Badge variant={item.status === "PUBLISHED" ? "default" : item.status === "HIDDEN" ? "destructive" : "secondary"}>
+                            {item.status}
+                          </Badge>
+                        </td>
+                        <td className="p-3.5">
+                          <Badge variant="outline">{item.accessLevel}</Badge>
+                        </td>
+                        <td className="p-3.5 text-kawaii-mocha/70">{item.platform}</td>
+                        <td className="p-3.5 text-xs text-kawaii-mocha/65">
+                          {item.downloadCount} {isMounted ? t.adminKeyboards.downloads : "lượt tải"} · {item.likeCount} {isMounted ? t.adminKeyboards.likes : "lượt thích"}
+                        </td>
+                        <td className="p-3.5">
+                          <div className="flex justify-end gap-2">
+                            <PermissionGate permission={PERMISSIONS.KEYBOARD_UPDATE}>
+                              <Button variant="outline" size="icon" className="h-9 w-9 rounded-2xl border-kawaii-sky/40 bouncy-hover" aria-label={isMounted ? t.adminUi.edit : "Chỉnh sửa"} onClick={() => edit(item)}>
+                                <Edit3 className="h-4 w-4 text-kawaii-mocha" />
+                              </Button>
+                            </PermissionGate>
+                            <PermissionGate permission={PERMISSIONS.KEYBOARD_DELETE}>
+                              <Button variant="destructive" size="icon" className="h-9 w-9 rounded-2xl bouncy-hover" aria-label={isMounted ? t.adminUi.delete : "Xóa"} onClick={() => setDeleting(item)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </PermissionGate>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </CardContent>
@@ -234,6 +363,7 @@ export default function KeyboardManagementPage() {
           busy={save.isPending}
           onSubmit={(payload) => save.mutateAsync({ payload, id: editing?.id }).then(() => undefined)}
         />
+        {/* Single delete dialog */}
         <ConfirmDialog
           open={Boolean(deleting)}
           onOpenChange={(open) => !open && setDeleting(null)}
@@ -246,8 +376,17 @@ export default function KeyboardManagementPage() {
           busy={remove.isPending}
           onConfirm={() => deleting && remove.mutate(deleting.id)}
         />
+        {/* Bulk delete dialog */}
+        <ConfirmDialog
+          open={bulkDeleting}
+          onOpenChange={(open) => !open && setBulkDeleting(false)}
+          title={`Xóa ${selectedIds.size} giao diện bàn phím?`}
+          description={`Bạn có chắc chắn muốn xóa ${selectedIds.size} theme đã chọn không? Các theme chưa có lượt tải sẽ bị xóa vĩnh viễn, các theme đã có lượt tải sẽ được chuyển sang trạng thái lưu trữ.`}
+          busy={bulkRemove.isPending}
+          onConfirm={() => bulkRemove.mutate([...selectedIds])}
+        />
         <Dialog open={quotaOpen} onOpenChange={setQuotaOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md rounded-3xl">
             <DialogHeader>
               <DialogTitle className="text-kawaii-mocha">
                 {isMounted ? t.adminKeyboards.resetQuotaDialogTitle : "Đặt lại hạn mức tải"}
@@ -261,13 +400,14 @@ export default function KeyboardManagementPage() {
                 value={quotaUserId}
                 onChange={(event) => setQuotaUserId(event.target.value)}
                 placeholder="00000000-0000-0000-0000-000000000000"
+                className="h-11 rounded-2xl border-2 border-input"
               />
             </Field>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setQuotaOpen(false)}>
+              <Button type="button" variant="outline" className="h-10 rounded-2xl" onClick={() => setQuotaOpen(false)}>
                 {isMounted ? t.adminUi.cancel : "Hủy"}
               </Button>
-              <Button disabled={!quotaUserId || quota.isPending} onClick={() => quota.mutate(quotaUserId)}>
+              <Button className="h-10 rounded-2xl bg-kawaii-babyblue hover:bg-kawaii-babyblue/90 font-bold" disabled={!quotaUserId || quota.isPending} onClick={() => quota.mutate(quotaUserId)}>
                 {quota.isPending
                   ? (isMounted ? t.adminUi.processing : "Đang xử lý...")
                   : (isMounted ? t.adminKeyboards.resetQuota : "Đặt lại quota")}

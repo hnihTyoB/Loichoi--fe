@@ -42,6 +42,11 @@ export const keyboardService = {
     await apiClient.delete(`/keyboards/${id}`);
   },
 
+  async bulkDelete(ids: string[]): Promise<{ succeeded: string[]; failed: Array<{ id: string; reason: string }>; totalRequested: number; totalDeleted: number }> {
+    const response = await apiClient.post<ApiResponse<{ succeeded: string[]; failed: Array<{ id: string; reason: string }>; totalRequested: number; totalDeleted: number }>>("/keyboards/manage/bulk-delete", { ids });
+    return response.data.data;
+  },
+
   async resetQuota(userId: string): Promise<void> {
     await apiClient.post(`/keyboards/manage/users/${userId}/reset-quota`);
   },

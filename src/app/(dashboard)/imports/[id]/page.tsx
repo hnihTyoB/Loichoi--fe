@@ -18,6 +18,9 @@ import {
   Loader2,
   Info,
   Sparkles,
+  ShieldCheck,
+  Folder,
+  Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -335,7 +338,8 @@ export default function ImportDetailPage() {
 
               <Field label="Quyền truy cập (Access Tier)">
                 <div className="h-11 px-3 rounded-2xl border-2 border-kawaii-sky/30 bg-kawaii-sky/15 flex items-center gap-1.5 text-xs font-bold text-kawaii-babyblue">
-                  <span>💎 Thành viên Discord</span>
+                  <ShieldCheck className="h-4 w-4 text-kawaii-babyblue" />
+                  <span>Thành viên Discord</span>
                 </div>
               </Field>
             </div>
@@ -359,18 +363,21 @@ export default function ImportDetailPage() {
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {draft.suggestedCategoryIds.map((id) => (
-                    <span key={id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                      📂 Danh mục: {id.slice(0, 8)}
+                    <span key={id} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                      <Folder className="h-3 w-3 text-blue-500" />
+                      Danh mục: {id.slice(0, 8)}
                     </span>
                   ))}
                   {draft.suggestedColorIds.map((id) => (
-                    <span key={id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-200">
-                      🎨 Màu sắc: {id.slice(0, 8)}
+                    <span key={id} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-200">
+                      <Palette className="h-3 w-3 text-pink-500" />
+                      Màu sắc: {id.slice(0, 8)}
                     </span>
                   ))}
                   {draft.suggestedStyleIds.map((id) => (
-                    <span key={id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-                      ✨ Phong cách: {id.slice(0, 8)}
+                    <span key={id} className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                      <Sparkles className="h-3 w-3 text-purple-500" />
+                      Phong cách: {id.slice(0, 8)}
                     </span>
                   ))}
                 </div>

@@ -84,16 +84,20 @@ export function useBulkApproveImports() {
     mutationFn: (payload: BulkApprovePayload) => importService.bulkApprove(payload),
     onSuccess: (result) => {
       client.invalidateQueries({ queryKey: [...importKeys.all, "list"] });
-      const { succeeded, failed } = result.data;
+      const succeeded = result?.data?.succeeded ?? (result as unknown as { succeeded?: unknown[] })?.succeeded ?? [];
+      const failed = result?.data?.failed ?? (result as unknown as { failed?: unknown[] })?.failed ?? [];
+
       if (succeeded.length > 0) {
-        toast.success(`${succeeded.length} keyboards published successfully`);
+        toast.success(`Đã duyệt và phát hành thành công ${succeeded.length} giao diện bàn phím!`);
       }
       if (failed.length > 0) {
-        toast.error(`${failed.length} items failed to publish`);
+        toast.error(`Có ${failed.length} mục chưa thể phát hành`);
       }
     },
     onError: (err: unknown) => {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Bulk approve failed";
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        "Duyệt hàng loạt thất bại. Vui lòng thử lại!";
       toast.error(message);
     },
   });

@@ -271,23 +271,23 @@ export default function ImportsPage() {
 
           {/* High confidence filter */}
           <Button
-            variant={filter.minConfidence === 0.9 ? "default" : "outline"}
+            variant={filter.minConfidence === 0.85 ? "default" : "outline"}
             size="sm"
             className={`h-11 rounded-2xl gap-1.5 text-xs font-bold ${
-              filter.minConfidence === 0.9
+              filter.minConfidence === 0.85
                 ? "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
                 : "border-2 border-input text-kawaii-mocha hover:bg-kawaii-sky/20"
             }`}
             onClick={() =>
               setFilter((f) => ({
                 ...f,
-                minConfidence: f.minConfidence === 0.9 ? undefined : 0.9,
+                minConfidence: f.minConfidence === 0.85 ? undefined : 0.85,
                 page: 1,
               }))
             }
           >
             <Zap className="h-3.5 w-3.5" />
-            Độ tin cậy cao (≥90%)
+            Độ tin cậy cao (≥85%)
           </Button>
 
           {/* Stats summary */}

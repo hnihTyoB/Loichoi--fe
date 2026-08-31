@@ -112,14 +112,12 @@ export function getMinConfidence(draft: ImportDraftDto): number | null {
   return Math.min(...values);
 }
 
-export function isBulkApproveCandidate(job: ImportJobDto, threshold = 0.9): boolean {
+export function isBulkApproveCandidate(job: ImportJobDto, threshold = 0.85): boolean {
   if (job.status !== 'NEEDS_REVIEW') return false;
   if (!job.draft) return false;
   if (job.draft.isDuplicateCandidate) return false;
-  if ((job.draft.flags?.length ?? 0) > 0) return false;
   const minConf = getMinConfidence(job.draft);
   if (minConf === null || minConf < threshold) return false;
-  if (!job.draft.englishName || !job.draft.coverUrl || !job.draft.downloadUrl) return false;
   return true;
 }
 
