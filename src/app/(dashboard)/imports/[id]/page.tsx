@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -134,6 +134,24 @@ export default function ImportDetailPage() {
     await reprocessMutation.mutateAsync(id);
   }
 
+  const allImages: string[] = useMemo(() => {
+    const list: string[] = [];
+    const seen = new Set<string>();
+
+    const add = (u?: string | null) => {
+      if (!u) return;
+      const base = u.split("?")[0].toLowerCase();
+      if (!seen.has(base)) {
+        seen.add(base);
+        list.push(u);
+      }
+    };
+
+    add(draft?.coverUrl);
+    draft?.previewUrls?.forEach(add);
+    return list;
+  }, [draft?.coverUrl, draft?.previewUrls]);
+
   if (isLoading || !job) {
     return (
       <div className="flex items-center justify-center h-64 text-kawaii-mocha/50 text-sm font-semibold">
@@ -142,11 +160,6 @@ export default function ImportDetailPage() {
       </div>
     );
   }
-
-  const allImages = [
-    ...(draft?.coverUrl ? [draft.coverUrl] : []),
-    ...(draft?.previewUrls ?? []),
-  ];
 
   const isPublished = job.status === "IMPORTED";
   const minConf = draft ? getMinConfidence(draft) : null;
@@ -198,6 +211,7 @@ export default function ImportDetailPage() {
                   alt="Preview"
                   width={400}
                   height={400}
+                  unoptimized
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -222,7 +236,7 @@ export default function ImportDetailPage() {
                         : "border-kawaii-sky/20 opacity-70 hover:opacity-100"
                     }`}
                   >
-                    <Image src={url} alt="" width={64} height={64} className="h-full w-full object-cover" />
+                    <Image src={url} alt="" width={64} height={64} unoptimized className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>
