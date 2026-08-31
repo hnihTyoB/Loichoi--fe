@@ -58,6 +58,8 @@ function SingleFilterDropdown({
   );
 }
 
+const KEYBOARDS_PER_PAGE = 52;
+
 export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trending" }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -87,7 +89,7 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
   useEffect(() => setSearchInput(filters.search), [filters.search]);
   useEffect(() => setJumpPage(String(filters.page)), [filters.page]);
 
-  const query = useKeyboards({ ...filters, limit: 32 });
+  const query = useKeyboards({ ...filters, limit: KEYBOARDS_PER_PAGE });
 
   function updateUrl(values: Record<string, string | number | undefined>, resetPage = true) {
     const next = new URLSearchParams(searchParams.toString());
@@ -130,8 +132,8 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
 
   const totalPages = query.data?.meta.totalPages ?? 1;
   const totalCount = query.data?.meta.total ?? 0;
-  const startItem = totalCount > 0 ? (filters.page - 1) * 32 + 1 : 0;
-  const endItem = Math.min(filters.page * 32, totalCount);
+  const startItem = totalCount > 0 ? (filters.page - 1) * KEYBOARDS_PER_PAGE + 1 : 0;
+  const endItem = Math.min(filters.page * KEYBOARDS_PER_PAGE, totalCount);
 
   const hasActiveFilters = Boolean(filters.search || filters.category || filters.colors.length || filters.styles.length || filters.platform || (mode !== "trending" && filters.sort !== "latest"));
   const selectedColors = colors.filter((color) => filters.colors.includes(color.slug));
@@ -321,7 +323,7 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
         ) : null}
       </div>
 
-      {query.isLoading ? <KeyboardGridSkeleton count={32} /> : null}
+      {query.isLoading ? <KeyboardGridSkeleton count={KEYBOARDS_PER_PAGE} /> : null}
       {query.isError ? (
         <StatePanel
           icon={AlertTriangle}
