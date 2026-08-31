@@ -36,7 +36,7 @@ import {
   useResetImports,
 } from "@/hooks/use-imports";
 import { PermissionGate } from "@/components/shared/permission-gate";
-import { PageHeader, PaginationNav } from "@/components/shared/admin-ui";
+import { PageHeader, PaginationNav, selectClassName } from "@/components/shared/admin-ui";
 import { PERMISSIONS } from "@/lib/constants";
 import type { ImportJobDto, ImportJobStatus, ImportJobFilter } from "@/types/import.types";
 import { isBulkApproveCandidate, getMinConfidence } from "@/types/import.types";
@@ -246,6 +246,24 @@ export default function ImportsPage() {
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Limit selector (ngay sau Lọc theo trạng thái) */}
+          <select
+            className="h-11 w-auto min-w-[125px] rounded-2xl border-2 border-input bg-background px-3 text-xs font-semibold text-kawaii-mocha shadow-inner focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/25 cursor-pointer"
+            value={filter.limit ?? 20}
+            onChange={(e) =>
+              setFilter((f) => ({
+                ...f,
+                limit: Number(e.target.value),
+                page: 1,
+              }))
+            }
+            aria-label="Số dòng mỗi trang"
+          >
+            <option value={20}>20 / trang</option>
+            <option value={50}>50 / trang</option>
+            <option value={100}>100 / trang</option>
+          </select>
 
           {/* Duplicate filter */}
           <Button
