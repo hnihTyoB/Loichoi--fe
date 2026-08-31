@@ -82,9 +82,12 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
   }, [mode, searchParams]);
 
   const [searchInput, setSearchInput] = useState(filters.search);
-  useEffect(() => setSearchInput(filters.search), [filters.search]);
+  const [jumpPage, setJumpPage] = useState(String(filters.page));
 
-  const query = useKeyboards({ ...filters, limit: 30 });
+  useEffect(() => setSearchInput(filters.search), [filters.search]);
+  useEffect(() => setJumpPage(String(filters.page)), [filters.page]);
+
+  const query = useKeyboards({ ...filters, limit: 32 });
 
   function updateUrl(values: Record<string, string | number | undefined>, resetPage = true) {
     const next = new URLSearchParams(searchParams.toString());
@@ -102,6 +105,15 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
     updateUrl({ search: searchInput.trim() });
   }
 
+  function handleJumpSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const pageNum = Number(jumpPage);
+    const maxPage = query.data?.meta.totalPages ?? 1;
+    if (Number.isInteger(pageNum) && pageNum >= 1 && pageNum <= maxPage) {
+      updateUrl({ page: pageNum }, false);
+    }
+  }
+
   function toggleTaxonomy(key: "colors" | "styles", slug: string, current: string[]) {
     const next = current.includes(slug) ? current.filter((value) => value !== slug) : [...current, slug];
     updateUrl({ [key]: next.length ? next.join(",") : undefined, [key === "colors" ? "color" : "style"]: undefined });
@@ -117,6 +129,10 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
   const heading = mode === "trending" ? text.trending : text.explore;
 
   const totalPages = query.data?.meta.totalPages ?? 1;
+  const totalCount = query.data?.meta.total ?? 0;
+  const startItem = totalCount > 0 ? (filters.page - 1) * 32 + 1 : 0;
+  const endItem = Math.min(filters.page * 32, totalCount);
+
   const hasActiveFilters = Boolean(filters.search || filters.category || filters.colors.length || filters.styles.length || filters.platform || (mode !== "trending" && filters.sort !== "latest"));
   const selectedColors = colors.filter((color) => filters.colors.includes(color.slug));
   const selectedStyles = styles.filter((style) => filters.styles.includes(style.slug));
@@ -143,7 +159,7 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
               placeholder={text.explore.search}
-              className="pl-11 pr-11"
+              className="pl-11 pr-11 h-11 rounded-2xl border-2 border-input bg-kawaii-cloud/30"
               aria-label={text.explore.search}
             />
             {searchInput ? (
@@ -160,15 +176,15 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
               </button>
             ) : null}
           </div>
-          <Button type="submit" className="md:px-7">
-            <Search />
+          <Button type="submit" className="h-11 rounded-2xl md:px-7 bg-kawaii-babyblue text-white hover:bg-kawaii-babyblue/90 font-bold bouncy-hover">
+            <Search className="h-4 w-4 mr-1.5" />
             {language === "vi" ? "Tìm kiếm" : "Search"}
           </Button>
         </form>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <div className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
-            <span className="ml-2 flex items-center gap-1.5"><Grid2X2 className="h-3.5 w-3.5" />{text.explore.category}</span>
+            <span className="ml-2 flex items-center gap-1.5"><Grid2X2 className="h-3.5 w-3.5 text-kawaii-babyblue" />{text.explore.category}</span>
             <SingleFilterDropdown
               value={filters.category}
               allLabel={text.explore.allCategories}
@@ -178,7 +194,7 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
             />
           </div>
           <div className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
-            <span className="ml-2 flex items-center gap-1.5"><MonitorSmartphone className="h-3.5 w-3.5" />{text.explore.platform}</span>
+            <span className="ml-2 flex items-center gap-1.5"><MonitorSmartphone className="h-3.5 w-3.5 text-kawaii-babyblue" />{text.explore.platform}</span>
             <SingleFilterDropdown
               value={filters.platform || ""}
               allLabel={text.explore.allPlatforms}
@@ -193,7 +209,7 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
           </div>
           {mode !== "trending" ? (
             <div className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
-              <span className="ml-2 flex items-center gap-1.5"><ArrowUpDown className="h-3.5 w-3.5" />{text.explore.sort}</span>
+              <span className="ml-2 flex items-center gap-1.5"><ArrowUpDown className="h-3.5 w-3.5 text-kawaii-babyblue" />{text.explore.sort}</span>
               <SingleFilterDropdown
                 value={filters.sort}
                 allLabel={text.explore.latest}
@@ -210,7 +226,7 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
             </div>
           ) : null}
           <div className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
-            <span className="ml-2 flex items-center gap-1.5"><Palette className="h-3.5 w-3.5" />{text.explore.colors}</span>
+            <span className="ml-2 flex items-center gap-1.5"><Palette className="h-3.5 w-3.5 text-kawaii-babyblue" />{text.explore.colors}</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button type="button" className="flex h-11 w-full items-center gap-2 rounded-2xl border-2 border-input bg-background px-4 text-left text-sm font-bold text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/25">
@@ -242,7 +258,7 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
             </DropdownMenu>
           </div>
           <div className="space-y-1.5 text-xs font-bold text-kawaii-mocha/65">
-            <span className="ml-2 flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5" />{text.explore.styles}</span>
+            <span className="ml-2 flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-kawaii-babyblue" />{text.explore.styles}</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button type="button" className="flex h-11 w-full items-center gap-2 rounded-2xl border-2 border-input bg-background px-4 text-left text-sm font-bold text-foreground outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/25">
@@ -273,20 +289,39 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
         </div>
       </section>
 
+      {/* ─── Total Count & Filter Summary ─── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="inline-flex items-center gap-2 text-sm font-bold text-kawaii-mocha/65">
-          <Filter className="h-4 w-4" />
-          {query.isLoading ? text.common.loading : `${query.data?.meta.total ?? 0} ${text.explore.results}`}
-        </p>
+        <div className="flex items-center gap-2 flex-wrap text-sm font-bold text-kawaii-mocha/70">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-kawaii-sky/20 border border-kawaii-sky/40 text-kawaii-mocha shadow-sm">
+            <Filter className="h-4 w-4 text-kawaii-babyblue" />
+            {query.isLoading ? (
+              text.common.loading
+            ) : totalCount > 0 ? (
+              language === "vi" ? (
+                <>
+                  Hiển thị <span className="font-extrabold text-kawaii-mocha">{startItem} - {endItem}</span> trong tổng số{" "}
+                  <span className="font-extrabold text-kawaii-babyblue">{totalCount}</span> bàn phím
+                </>
+              ) : (
+                <>
+                  Showing <span className="font-extrabold text-kawaii-mocha">{startItem} - {endItem}</span> of{" "}
+                  <span className="font-extrabold text-kawaii-babyblue">{totalCount}</span> keyboards
+                </>
+              )
+            ) : (
+              language === "vi" ? "Không có kết quả nào" : "No results found"
+            )}
+          </span>
+        </div>
         {hasActiveFilters ? (
-          <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
-            <X />
+          <Button type="button" variant="ghost" size="sm" onClick={clearFilters} className="rounded-2xl text-xs font-bold gap-1 text-kawaii-mocha hover:bg-kawaii-sky/20">
+            <X className="h-4 w-4" />
             {text.explore.clear}
           </Button>
         ) : null}
       </div>
 
-      {query.isLoading ? <KeyboardGridSkeleton count={30} /> : null}
+      {query.isLoading ? <KeyboardGridSkeleton count={32} /> : null}
       {query.isError ? (
         <StatePanel
           icon={AlertTriangle}
@@ -309,28 +344,62 @@ export function ExploreContent({ mode = "explore" }: { mode?: "explore" | "trend
         <KeyboardGrid keyboards={query.data.data} locale={language} priorityCount={4} />
       ) : null}
 
+      {/* ─── Pagination with Page Jump ─── */}
       {query.isSuccess && totalPages > 1 ? (
-        <nav className="flex flex-wrap items-center justify-center gap-3 pt-4" aria-label="Pagination">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={filters.page <= 1}
-            onClick={() => updateUrl({ page: filters.page - 1 }, false)}
-          >
-            {text.common.previous}
-          </Button>
-          <span className="rounded-full bg-kawaii-cloud px-5 py-2 text-sm font-extrabold text-kawaii-mocha">
-            {text.common.page} {filters.page} {text.common.of} {totalPages}
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={filters.page >= totalPages}
-            onClick={() => updateUrl({ page: filters.page + 1 }, false)}
-          >
-            {text.common.next}
-          </Button>
-        </nav>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 pb-2 border-t border-kawaii-sky/30">
+          <nav className="flex items-center gap-2" aria-label="Pagination">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={filters.page <= 1}
+              onClick={() => updateUrl({ page: filters.page - 1 }, false)}
+              className="h-10 rounded-2xl border-2 border-kawaii-sky/40 text-xs font-bold text-kawaii-mocha hover:bg-kawaii-sky/20 bouncy-hover"
+            >
+              {text.common.previous}
+            </Button>
+            <span className="rounded-2xl bg-kawaii-cloud/70 border border-kawaii-sky/30 px-4 py-2 text-xs font-extrabold text-kawaii-mocha shadow-inner">
+              {text.common.page} {filters.page} / {totalPages}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={filters.page >= totalPages}
+              onClick={() => updateUrl({ page: filters.page + 1 }, false)}
+              className="h-10 rounded-2xl border-2 border-kawaii-sky/40 text-xs font-bold text-kawaii-mocha hover:bg-kawaii-sky/20 bouncy-hover"
+            >
+              {text.common.next}
+            </Button>
+          </nav>
+
+          {/* Direct page jump form */}
+          <form onSubmit={handleJumpSubmit} className="flex items-center gap-2">
+            <span className="text-xs font-bold text-kawaii-mocha/70">
+              {language === "vi" ? "Đến trang:" : "Go to page:"}
+            </span>
+            <Input
+              type="number"
+              min={1}
+              max={totalPages}
+              value={jumpPage}
+              onChange={(e) => setJumpPage(e.target.value)}
+              className="h-10 w-20 text-center text-xs font-black rounded-2xl border-2 border-kawaii-sky/40 bg-background"
+              aria-label={language === "vi" ? "Nhập số trang" : "Enter page number"}
+            />
+            <Button
+              type="submit"
+              size="sm"
+              className="h-10 rounded-2xl px-4 text-xs font-bold bg-kawaii-babyblue text-white hover:bg-kawaii-babyblue/90 bouncy-hover"
+              disabled={
+                !jumpPage ||
+                Number(jumpPage) < 1 ||
+                Number(jumpPage) > totalPages ||
+                Number(jumpPage) === filters.page
+              }
+            >
+              {language === "vi" ? "Đi" : "Go"}
+            </Button>
+          </form>
+        </div>
       ) : null}
     </div>
   );

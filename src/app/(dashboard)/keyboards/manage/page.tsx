@@ -6,7 +6,7 @@ import { Edit3, Keyboard, Plus, RefreshCcw, Search, Trash2, CheckCheck, Loader2 
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { PermissionGate } from "@/components/shared/permission-gate";
-import { AsyncState, ConfirmDialog, Field, PageHeader, selectClassName } from "@/components/shared/admin-ui";
+import { AsyncState, ConfirmDialog, Field, PageHeader, PaginationNav, selectClassName } from "@/components/shared/admin-ui";
 import { KeyboardFormDialog } from "@/components/forms/keyboard-form-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ import type { AdminKeyboard, KeyboardPayload } from "@/types/admin.types";
 export default function KeyboardManagementPage() {
   const { t, isMounted } = useTranslation();
   const client = useQueryClient();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [status, setStatus] = useState("");
@@ -40,9 +42,19 @@ export default function KeyboardManagementPage() {
   const [quotaUserId, setQuotaUserId] = useState("");
 
   const list = useQuery({
-    queryKey: ["keyboards", "manage", debouncedSearch, status, platform, colorId, styleId],
-    queryFn: () => keyboardService.getManagementList({ search: debouncedSearch || undefined, status: status || undefined, platform: platform || undefined, colorId: colorId || undefined, styleId: styleId || undefined, limit: 50 }),
+    queryKey: ["keyboards", "manage", debouncedSearch, status, platform, colorId, styleId, page, limit],
+    queryFn: () =>
+      keyboardService.getManagementList({
+        search: debouncedSearch || undefined,
+        status: status || undefined,
+        platform: platform || undefined,
+        colorId: colorId || undefined,
+        styleId: styleId || undefined,
+        page,
+        limit,
+      }),
   });
+
   const categories = useQuery({
     queryKey: ["categories", "manage", "options"],
     queryFn: () => categoryService.getManagementList({ limit: 100, isActive: true }),
@@ -57,6 +69,7 @@ export default function KeyboardManagementPage() {
   });
 
   const items = list.data?.data ?? [];
+  const meta = list.data?.meta;
   const allSelected = items.length > 0 && items.every((item) => selectedIds.has(item.id));
 
   const toggleAll = () => {
@@ -74,6 +87,42 @@ export default function KeyboardManagementPage() {
       else next.add(id);
       return next;
     });
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const handleStatusChange = (val: string) => {
+    setStatus(val);
+    setPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const handlePlatformChange = (val: string) => {
+    setPlatform(val);
+    setPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const handleColorChange = (val: string) => {
+    setColorId(val);
+    setPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const handleStyleChange = (val: string) => {
+    setStyleId(val);
+    setPage(1);
+    setSelectedIds(new Set());
+  };
+
+  const handleLimitChange = (val: number) => {
+    setLimit(val);
+    setPage(1);
+    setSelectedIds(new Set());
   };
 
   const refresh = () => {
@@ -220,136 +269,166 @@ export default function KeyboardManagementPage() {
 
         <Card className="rounded-3xl border-2 border-kawaii-sky/30 shadow-[0_4px_20px_rgba(162,207,254,0.12)]">
           <CardContent className="pt-6 md:pt-8">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_160px_160px_180px_180px]">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_150px_150px_160px_160px_120px]">
               <label className="relative">
                 <Search className="absolute left-4 top-3.5 h-4 w-4 text-kawaii-mocha/45" />
                 <Input
                   className="pl-10 h-11 rounded-2xl border-2 border-input bg-kawaii-cloud/30"
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event) => handleSearchChange(event.target.value)}
                   placeholder={isMounted ? t.adminKeyboards.searchPlaceholder : "Tìm tên hoặc slug..."}
                 />
               </label>
-              <select className={selectClassName} value={status} onChange={(event) => setStatus(event.target.value)}>
+              <select className={selectClassName} value={status} onChange={(event) => handleStatusChange(event.target.value)}>
                 <option value="">{isMounted ? t.adminKeyboards.allStatuses : "Mọi trạng thái"}</option>
                 <option value="DRAFT">{isMounted ? t.adminKeyboards.statusDraft : "Bản nháp"}</option>
                 <option value="PUBLISHED">{isMounted ? t.adminKeyboards.statusPublished : "Đã xuất bản"}</option>
                 <option value="HIDDEN">{isMounted ? t.adminKeyboards.statusHidden : "Đã ẩn"}</option>
               </select>
-              <select className={selectClassName} value={platform} onChange={(event) => setPlatform(event.target.value)}>
+              <select className={selectClassName} value={platform} onChange={(event) => handlePlatformChange(event.target.value)}>
                 <option value="">{isMounted ? t.adminKeyboards.allPlatforms : "Mọi nền tảng"}</option>
                 <option value="IOS">{isMounted ? t.adminKeyboards.platformIos : "iOS"}</option>
                 <option value="ANDROID">{isMounted ? t.adminKeyboards.platformAndroid : "Android"}</option>
                 <option value="BOTH">{isMounted ? t.adminKeyboards.platformBoth : "Cả hai"}</option>
               </select>
-              <select className={selectClassName} value={colorId} onChange={(event) => setColorId(event.target.value)} aria-label={isMounted ? t.adminKeyboards.filterColor : "Lọc theo màu"}>
+              <select className={selectClassName} value={colorId} onChange={(event) => handleColorChange(event.target.value)} aria-label={isMounted ? t.adminKeyboards.filterColor : "Lọc theo màu"}>
                 <option value="">{isMounted ? t.adminKeyboards.allColors : "Mọi màu sắc"}</option>
                 {colors.data?.map((color) => <option key={color.id} value={color.id}>{color.name}</option>)}
               </select>
-              <select className={selectClassName} value={styleId} onChange={(event) => setStyleId(event.target.value)} aria-label={isMounted ? t.adminKeyboards.filterStyle : "Lọc theo phong cách"}>
+              <select className={selectClassName} value={styleId} onChange={(event) => handleStyleChange(event.target.value)} aria-label={isMounted ? t.adminKeyboards.filterStyle : "Lọc theo phong cách"}>
                 <option value="">{isMounted ? t.adminKeyboards.allStyles : "Mọi phong cách"}</option>
                 {styles.data?.map((style) => <option key={style.id} value={style.id}>{style.name}</option>)}
+              </select>
+              <select
+                className={selectClassName}
+                value={limit}
+                onChange={(event) => handleLimitChange(Number(event.target.value))}
+                aria-label="Số dòng mỗi trang"
+              >
+                <option value={10}>10 / trang</option>
+                <option value={20}>20 / trang</option>
+                <option value={50}>50 / trang</option>
+                <option value={100}>100 / trang</option>
               </select>
             </div>
           </CardContent>
         </Card>
+
         <AsyncState
           loading={list.isLoading}
           error={list.isError}
           empty={!list.isLoading && !list.isError && !items.length}
           emptyText={isMounted ? t.adminKeyboards.noKeyboards : "Chưa có theme phù hợp bộ lọc"}
         />
+
         {items.length ? (
-          <Card className="rounded-3xl border-2 border-kawaii-sky/30 overflow-hidden shadow-[0_4px_20px_rgba(162,207,254,0.12)]">
-            <CardContent className="overflow-x-auto p-0">
-              <table className="w-full min-w-[850px] text-left text-sm">
-                <thead>
-                  <tr className="border-b-2 border-kawaii-sky/40 text-xs text-kawaii-mocha/65 bg-kawaii-cloud/30">
-                    <PermissionGate permission={PERMISSIONS.KEYBOARD_DELETE}>
-                      <th className="p-3.5 w-12 text-center">
-                        <input
-                          type="checkbox"
-                          checked={allSelected}
-                          onChange={toggleAll}
-                          aria-label="Chọn tất cả"
-                          className="h-4 w-4 rounded border-kawaii-sky text-kawaii-babyblue focus:ring-kawaii-sky cursor-pointer"
-                        />
-                      </th>
-                    </PermissionGate>
-                    <th className="p-3.5">{isMounted ? t.adminKeyboards.thTheme : "Theme"}</th>
-                    <th className="p-3.5">{isMounted ? t.adminKeyboards.thStatus : "Trạng thái"}</th>
-                    <th className="p-3.5">{isMounted ? t.adminKeyboards.thAccess : "Truy cập"}</th>
-                    <th className="p-3.5">{isMounted ? t.adminKeyboards.thPlatform : "Nền tảng"}</th>
-                    <th className="p-3.5">{isMounted ? t.adminKeyboards.thPerformance : "Hiệu suất"}</th>
-                    <th className="p-3.5 text-right">{isMounted ? t.adminKeyboards.thActions : "Thao tác"}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-kawaii-sky/15">
-                  {items.map((item) => {
-                    const isSelected = selectedIds.has(item.id);
-                    return (
-                      <tr
-                        key={item.id}
-                        className={`transition-colors hover:bg-kawaii-cloud/30 ${
-                          isSelected ? "bg-kawaii-sky/15" : ""
-                        }`}
-                      >
-                        <PermissionGate permission={PERMISSIONS.KEYBOARD_DELETE}>
-                          <td className="p-3.5 text-center">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleOne(item.id)}
-                              aria-label={`Chọn ${item.name}`}
-                              className="h-4 w-4 rounded border-kawaii-sky text-kawaii-babyblue focus:ring-kawaii-sky cursor-pointer"
-                            />
-                          </td>
-                        </PermissionGate>
-                        <td className="p-3.5">
-                          <div className="font-bold text-kawaii-mocha">{item.name}</div>
-                          <div className="text-xs text-kawaii-mocha/55">
-                            {item.slug} · {item.categoryNames.join(", ") || (isMounted ? t.adminKeyboards.unclassified : "Chưa phân loại")}
-                          </div>
-                          {(item.colorNames.length || item.styleNames.length) ? (
-                            <div className="mt-1 text-xs font-semibold text-kawaii-warmbrown">
-                              {[...item.colorNames, ...item.styleNames].join(" · ")}
+          <div className="space-y-4">
+            <Card className="rounded-3xl border-2 border-kawaii-sky/30 overflow-hidden shadow-[0_4px_20px_rgba(162,207,254,0.12)]">
+              <CardContent className="overflow-x-auto p-0">
+                <table className="w-full min-w-[850px] text-left text-sm">
+                  <thead>
+                    <tr className="border-b-2 border-kawaii-sky/40 text-xs text-kawaii-mocha/65 bg-kawaii-cloud/30">
+                      <PermissionGate permission={PERMISSIONS.KEYBOARD_DELETE}>
+                        <th className="p-3.5 w-12 text-center">
+                          <input
+                            type="checkbox"
+                            checked={allSelected}
+                            onChange={toggleAll}
+                            aria-label="Chọn tất cả"
+                            className="h-4 w-4 rounded border-kawaii-sky text-kawaii-babyblue focus:ring-kawaii-sky cursor-pointer"
+                          />
+                        </th>
+                      </PermissionGate>
+                      <th className="p-3.5">{isMounted ? t.adminKeyboards.thTheme : "Theme"}</th>
+                      <th className="p-3.5">{isMounted ? t.adminKeyboards.thStatus : "Trạng thái"}</th>
+                      <th className="p-3.5">{isMounted ? t.adminKeyboards.thAccess : "Truy cập"}</th>
+                      <th className="p-3.5">{isMounted ? t.adminKeyboards.thPlatform : "Nền tảng"}</th>
+                      <th className="p-3.5">{isMounted ? t.adminKeyboards.thPerformance : "Hiệu suất"}</th>
+                      <th className="p-3.5 text-right">{isMounted ? t.adminKeyboards.thActions : "Thao tác"}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-kawaii-sky/15">
+                    {items.map((item) => {
+                      const isSelected = selectedIds.has(item.id);
+                      return (
+                        <tr
+                          key={item.id}
+                          className={`transition-colors hover:bg-kawaii-cloud/30 ${
+                            isSelected ? "bg-kawaii-sky/15" : ""
+                          }`}
+                        >
+                          <PermissionGate permission={PERMISSIONS.KEYBOARD_DELETE}>
+                            <td className="p-3.5 text-center">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleOne(item.id)}
+                                aria-label={`Chọn ${item.name}`}
+                                className="h-4 w-4 rounded border-kawaii-sky text-kawaii-babyblue focus:ring-kawaii-sky cursor-pointer"
+                              />
+                            </td>
+                          </PermissionGate>
+                          <td className="p-3.5">
+                            <div className="font-bold text-kawaii-mocha">{item.name}</div>
+                            <div className="text-xs text-kawaii-mocha/55">
+                              {item.slug} · {item.categoryNames.join(", ") || (isMounted ? t.adminKeyboards.unclassified : "Chưa phân loại")}
                             </div>
-                          ) : null}
-                        </td>
-                        <td className="p-3.5">
-                          <Badge variant={item.status === "PUBLISHED" ? "default" : item.status === "HIDDEN" ? "destructive" : "secondary"}>
-                            {item.status}
-                          </Badge>
-                        </td>
-                        <td className="p-3.5">
-                          <Badge variant="outline">{item.accessLevel}</Badge>
-                        </td>
-                        <td className="p-3.5 text-kawaii-mocha/70">{item.platform}</td>
-                        <td className="p-3.5 text-xs text-kawaii-mocha/65">
-                          {item.downloadCount} {isMounted ? t.adminKeyboards.downloads : "lượt tải"} · {item.likeCount} {isMounted ? t.adminKeyboards.likes : "lượt thích"}
-                        </td>
-                        <td className="p-3.5">
-                          <div className="flex justify-end gap-2">
-                            <PermissionGate permission={PERMISSIONS.KEYBOARD_UPDATE}>
-                              <Button variant="outline" size="icon" className="h-9 w-9 rounded-2xl border-kawaii-sky/40 bouncy-hover" aria-label={isMounted ? t.adminUi.edit : "Chỉnh sửa"} onClick={() => edit(item)}>
-                                <Edit3 className="h-4 w-4 text-kawaii-mocha" />
-                              </Button>
-                            </PermissionGate>
-                            <PermissionGate permission={PERMISSIONS.KEYBOARD_DELETE}>
-                              <Button variant="destructive" size="icon" className="h-9 w-9 rounded-2xl bouncy-hover" aria-label={isMounted ? t.adminUi.delete : "Xóa"} onClick={() => setDeleting(item)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </PermissionGate>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
+                            {(item.colorNames.length || item.styleNames.length) ? (
+                              <div className="mt-1 text-xs font-semibold text-kawaii-warmbrown">
+                                {[...item.colorNames, ...item.styleNames].join(" · ")}
+                              </div>
+                            ) : null}
+                          </td>
+                          <td className="p-3.5">
+                            <Badge variant={item.status === "PUBLISHED" ? "default" : item.status === "HIDDEN" ? "destructive" : "secondary"}>
+                              {item.status}
+                            </Badge>
+                          </td>
+                          <td className="p-3.5">
+                            <Badge variant="outline">{item.accessLevel}</Badge>
+                          </td>
+                          <td className="p-3.5 text-kawaii-mocha/70">{item.platform}</td>
+                          <td className="p-3.5 text-xs text-kawaii-mocha/65">
+                            {item.downloadCount} {isMounted ? t.adminKeyboards.downloads : "lượt tải"} · {item.likeCount} {isMounted ? t.adminKeyboards.likes : "lượt thích"}
+                          </td>
+                          <td className="p-3.5">
+                            <div className="flex justify-end gap-2">
+                              <PermissionGate permission={PERMISSIONS.KEYBOARD_UPDATE}>
+                                <Button variant="outline" size="icon" className="h-9 w-9 rounded-2xl border-kawaii-sky/40 bouncy-hover" aria-label={isMounted ? t.adminUi.edit : "Chỉnh sửa"} onClick={() => edit(item)}>
+                                  <Edit3 className="h-4 w-4 text-kawaii-mocha" />
+                                </Button>
+                              </PermissionGate>
+                              <PermissionGate permission={PERMISSIONS.KEYBOARD_DELETE}>
+                                <Button variant="destructive" size="icon" className="h-9 w-9 rounded-2xl bouncy-hover" aria-label={isMounted ? t.adminUi.delete : "Xóa"} onClick={() => setDeleting(item)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </PermissionGate>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </CardContent>
+            </Card>
+
+            {/* ─── Pagination Nav ─── */}
+            {meta && (
+              <PaginationNav
+                page={page}
+                totalPages={meta.totalPages}
+                total={meta.total}
+                limit={limit}
+                onPageChange={(newPage) => {
+                  setPage(newPage);
+                  setSelectedIds(new Set());
+                }}
+              />
+            )}
+          </div>
         ) : null}
+
         <KeyboardFormDialog
           open={formOpen}
           onOpenChange={(open) => {
