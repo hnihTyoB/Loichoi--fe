@@ -83,10 +83,9 @@ export default function ImportsPage() {
   const { data, isLoading, refetch, isFetching } = useImportJobs(filter);
   const bulkApproveMutation = useBulkApproveImports();
 
-  const jobs: ImportJobDto[] = data?.data ?? [];
-
   // Client-side search filter on originalName / englishName / referenceNumber
   const filteredJobs = useMemo(() => {
+    const jobs: ImportJobDto[] = data?.data ?? [];
     if (!search.trim()) return jobs;
     const q = search.toLowerCase();
     return jobs.filter(
@@ -95,7 +94,7 @@ export default function ImportsPage() {
         j.draft?.englishName?.toLowerCase().includes(q) ||
         String(j.thread.discordReferenceNumber ?? "").includes(q),
     );
-  }, [jobs, search]);
+  }, [data?.data, search]);
 
   // Bulk-approvable subset
   const bulkCandidates = useMemo(() => filteredJobs.filter((j) => isBulkApproveCandidate(j)), [filteredJobs]);

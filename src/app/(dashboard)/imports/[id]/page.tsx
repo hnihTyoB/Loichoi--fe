@@ -23,7 +23,6 @@ import {
   Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, selectClassName, ConfirmDialog } from "@/components/shared/admin-ui";
@@ -90,7 +89,6 @@ export default function ImportDetailPage() {
   // Local form state
   const [form, setForm] = useState<UpdateDraftPayload>({});
   const [rejectOpen, setRejectOpen] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
   const [selectedImage, setSelectedImage] = useState<number>(0);
 
   // Sync form with loaded data
@@ -127,7 +125,7 @@ export default function ImportDetailPage() {
   }
 
   async function handleRejectConfirm() {
-    await rejectMutation.mutateAsync({ id, reason: rejectReason || undefined });
+    await rejectMutation.mutateAsync({ id });
     setRejectOpen(false);
     router.push("/imports");
   }
@@ -312,7 +310,12 @@ export default function ImportDetailPage() {
               <Field label="Nền tảng hỗ trợ (Platform)">
                 <select
                   value={form.platform ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, platform: (e.target.value || undefined) as any }))}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      platform: (e.target.value as UpdateDraftPayload["platform"]) || undefined,
+                    }))
+                  }
                   className={selectClassName}
                   disabled={isPublished}
                 >
@@ -326,7 +329,12 @@ export default function ImportDetailPage() {
               <Field label="Nguồn tải (Download Source)">
                 <select
                   value={form.downloadSource ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, downloadSource: (e.target.value || undefined) as any }))}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      downloadSource: (e.target.value as UpdateDraftPayload["downloadSource"]) || undefined,
+                    }))
+                  }
                   className={selectClassName}
                   disabled={isPublished}
                 >
