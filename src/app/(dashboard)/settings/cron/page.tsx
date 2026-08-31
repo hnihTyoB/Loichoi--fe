@@ -79,8 +79,8 @@ export default function CronPage() {
           description={isMounted ? t.adminSettings.cronDesc : "Theo dõi lịch chạy và kích hoạt thủ công các công việc nền được cho phép."}
         />
         <Card>
-          <CardContent className="pt-6 md:pt-8">
-            <label className="relative block max-w-xl">
+          <CardContent className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-6 md:pt-8">
+            <label className="relative block w-full max-w-xl">
               <Search className="absolute left-4 top-3.5 h-4 w-4 text-kawaii-mocha/45" />
               <Input
                 className="pl-10"
@@ -89,6 +89,11 @@ export default function CronPage() {
                 placeholder={isMounted ? t.adminSettings.searchJobPlaceholder : "Tìm tên tác vụ..."}
               />
             </label>
+            <div className="flex items-center gap-2 text-xs text-kawaii-mocha/60 shrink-0">
+              <Badge variant="outline" className="font-mono text-[11px] bg-kawaii-peach/10 border-kawaii-peach/30 text-kawaii-mocha">
+                🕒 Asia/Ho_Chi_Minh (UTC+7)
+              </Badge>
+            </div>
           </CardContent>
         </Card>
         <AsyncState
