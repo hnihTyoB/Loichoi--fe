@@ -36,7 +36,7 @@ import {
   useResetImports,
 } from "@/hooks/use-imports";
 import { PermissionGate } from "@/components/shared/permission-gate";
-import { PageHeader, PaginationNav, selectClassName } from "@/components/shared/admin-ui";
+import { PageHeader, PaginationNav } from "@/components/shared/admin-ui";
 import { PERMISSIONS } from "@/lib/constants";
 import type { ImportJobDto, ImportJobStatus, ImportJobFilter } from "@/types/import.types";
 import { isBulkApproveCandidate, getMinConfidence } from "@/types/import.types";
