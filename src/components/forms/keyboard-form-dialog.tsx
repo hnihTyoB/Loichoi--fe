@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { ExternalLink, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,8 @@ import { useTranslation } from "@/hooks/use-translation";
 import { isSupportedDownloadUrl } from "@/lib/download-url";
 import type { AdminCategory, AdminKeyboard, KeyboardPayload } from "@/types/admin.types";
 import type { KeyboardColor, KeyboardStyle } from "@/types/keyboard.types";
+
+const GOOGLE_DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1eIFX6XXS-oW6dVbFkp_8NJR-Xj4oD0r8?usp=sharing";
 
 const schema = z.object({
   name: z.string().min(3, "Tên cần ít nhất 3 ký tự").max(150),
@@ -171,9 +174,33 @@ export function KeyboardFormDialog({
               placeholder={isMounted ? "Nhập mô tả chi tiết, hướng dẫn cài đặt và thông tin theme..." : "Nhập mô tả chi tiết, hướng dẫn cài đặt và thông tin theme..."}
             />
           </Field>
-          <Field label={isMounted ? t.adminKeyboards.formDriveUrl : "URL tải xuống"} error={errors.driveUrl?.message}>
-            <Input {...register("driveUrl")} placeholder="https://discord.com/channels/..." />
-          </Field>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between px-1">
+              <label className="text-xs font-bold text-kawaii-mocha">
+                {isMounted ? t.adminKeyboards.formDriveUrl : "URL tải xuống"}
+              </label>
+              <a
+                href={GOOGLE_DRIVE_FOLDER_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline transition-colors"
+                title="Mở thư mục Google Drive"
+              >
+                <FolderOpen className="h-3.5 w-3.5 text-primary" />
+                <span>Google Drive</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+            <Input
+              {...register("driveUrl")}
+              placeholder="https://drive.google.com/... hoặc https://discord.com/..."
+            />
+            {errors.driveUrl?.message && (
+              <span className="ml-1 block text-xs font-semibold text-destructive">
+                {errors.driveUrl.message}
+              </span>
+            )}
+          </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label={isMounted ? t.adminKeyboards.formPlatform : "Nền tảng"}>
               <select className={selectClassName} {...register("platform")}>
