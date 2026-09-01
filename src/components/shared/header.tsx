@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Keyboard, LogIn, LogOut, PanelLeftClose, PanelLeftOpen, User as UserIcon, UserPlus } from "lucide-react";
+import { BookOpen, Flame, Keyboard, LogIn, LogOut, PanelLeftClose, PanelLeftOpen, User as UserIcon, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "./brand-logo";
 import { ThemeToggle } from "./theme-toggle";
@@ -24,12 +24,14 @@ export function Header() {
   const isPublicRoute = pathname === "/" ||
     pathname === "/keyboards" ||
     (pathname.startsWith("/keyboards/") && !pathname.startsWith("/keyboards/manage")) ||
-    pathname === "/trending";
+    pathname === "/trending" ||
+    pathname === "/guide";
   const showSidebarToggle = isAuthenticated && !isPublicRoute;
 
   const publicLinks = [
     { href: "/keyboards", label: isMounted ? t.nav.explore : publicText.nav.explore, icon: Keyboard },
     { href: "/trending", label: isMounted ? t.nav.trending : publicText.nav.trending, icon: Flame },
+    { href: "/guide", label: isMounted ? t.nav.guide : publicText.nav.guide, icon: BookOpen },
   ];
 
   const handleLogout = async () => {

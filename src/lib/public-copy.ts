@@ -2,7 +2,7 @@ import type { Language } from "@/lib/i18n";
 
 const copy = {
   vi: {
-    nav: { explore: "Khám phá", trending: "Thịnh hành" },
+    nav: { explore: "Khám phá", trending: "Thịnh hành", guide: "Hướng dẫn" },
     common: {
       viewAll: "Xem tất cả",
       loading: "Đang tải...",
@@ -98,6 +98,11 @@ const copy = {
       title: "Giao diện đang thịnh hành",
       description: "Xếp hạng theo lượt tải để bạn không bỏ lỡ những thiết kế nổi bật.",
     },
+    guide: {
+      eyebrow: "Cẩm nang hướng dẫn & Hỗ trợ",
+      title: "Cách Tải Bàn Phím Dễ Thương",
+      description: "Cẩm nang hướng dẫn chi tiết từng bước cài đặt bàn phím siêu cute qua Baidu Keyboard cùng Roi.",
+    },
     footer: {
       description: "Thư viện theme bàn phím điện thoại với nhiều ảnh xem trước và bộ file tải cho iOS, Android.",
       discover: "Khám phá",
@@ -107,7 +112,7 @@ const copy = {
     },
   },
   en: {
-    nav: { explore: "Explore", trending: "Trending" },
+    nav: { explore: "Explore", trending: "Trending", guide: "Guide" },
     common: {
       viewAll: "View all",
       loading: "Loading...",
@@ -203,6 +208,11 @@ const copy = {
       title: "Themes trending now",
       description: "Ranked by downloads so you never miss a standout design.",
     },
+    guide: {
+      eyebrow: "User Guide & Support",
+      title: "How to Get Free Cute Keyboards",
+      description: "A complete step-by-step tutorial on setting up cute kawaii keyboards via Baidu Keyboard with Roi.",
+    },
     footer: {
       description: "Mobile keyboard themes with rich previews and downloadable file packs for iOS and Android.",
       discover: "Discover",
@@ -216,3 +226,4 @@ const copy = {
 export function getPublicCopy(language: Language) {
   return copy[language];
 }
+

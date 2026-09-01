@@ -20,7 +20,8 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const isPublicRoute = pathname === "/keyboards" ||
     (pathname.startsWith("/keyboards/") && !pathname.startsWith("/keyboards/manage")) ||
-    pathname === "/trending";
+    pathname === "/trending" ||
+    pathname === "/guide";
 
   useEffect(() => {
     if (!isPublicRoute && !isLoading && !isAuthenticated) {

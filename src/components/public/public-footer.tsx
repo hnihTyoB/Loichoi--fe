@@ -81,6 +81,7 @@ export function PublicFooter() {
           <nav className="mt-4 flex flex-col items-start gap-3 text-sm font-semibold text-kawaii-mocha/65">
             <Link className="hover:text-kawaii-warmbrown" href="/keyboards">{text.nav.explore}</Link>
             <Link className="hover:text-kawaii-warmbrown" href="/trending">{text.nav.trending}</Link>
+            <Link className="hover:text-kawaii-warmbrown" href="/guide">{text.nav.guide}</Link>
           </nav>
         </div>
         <div>

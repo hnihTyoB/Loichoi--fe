@@ -3,11 +3,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { importService } from "@/services/import.service";
 import { toast } from "sonner";
+import { dictionary } from "@/lib/i18n";
+import { useLanguageStore } from "@/stores/language-store";
 import type {
   ImportJobFilter,
   UpdateDraftPayload,
   BulkApprovePayload,
 } from "@/types/import.types";
+
+function getImportsDict() {
+  const lang = useLanguageStore.getState().language || "vi";
+  return dictionary[lang]?.adminImports ?? dictionary.vi.adminImports;
+}
 
 // ──────────────────────────────────────────────
 // Query Keys
@@ -49,9 +56,10 @@ export function useUpdateDraft(importJobId: string) {
   return useMutation({
     mutationFn: (payload: UpdateDraftPayload) => importService.updateDraft(importJobId, payload),
     onSuccess: () => {
+      const dict = getImportsDict();
       client.invalidateQueries({ queryKey: importKeys.detail(importJobId) });
       client.invalidateQueries({ queryKey: [...importKeys.all, "list"] });
-      toast.success("Draft updated successfully");
+      toast.success(dict.draftUpdatedSuccess);
     },
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Failed to update draft";
@@ -66,9 +74,10 @@ export function useApproveImport() {
   return useMutation({
     mutationFn: (id: string) => importService.approve(id),
     onSuccess: (_, id) => {
+      const dict = getImportsDict();
       client.invalidateQueries({ queryKey: importKeys.detail(id) });
       client.invalidateQueries({ queryKey: [...importKeys.all, "list"] });
-      toast.success("Keyboard published successfully");
+      toast.success(dict.keyboardPublishedSuccess);
     },
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Approval failed";
@@ -83,21 +92,23 @@ export function useBulkApproveImports() {
   return useMutation({
     mutationFn: (payload: BulkApprovePayload) => importService.bulkApprove(payload),
     onSuccess: (result) => {
+      const dict = getImportsDict();
       client.invalidateQueries({ queryKey: [...importKeys.all, "list"] });
       const succeeded = result?.data?.succeeded ?? (result as unknown as { succeeded?: unknown[] })?.succeeded ?? [];
       const failed = result?.data?.failed ?? (result as unknown as { failed?: unknown[] })?.failed ?? [];
 
       if (succeeded.length > 0) {
-        toast.success(`Đã duyệt và phát hành thành công ${succeeded.length} giao diện bàn phím!`);
+        toast.success(`${dict.bulkApproveSuccessPrefix} ${succeeded.length} ${dict.bulkApproveSuccessSuffix}`);
       }
       if (failed.length > 0) {
-        toast.error(`Có ${failed.length} mục chưa thể phát hành`);
+        toast.error(`${dict.bulkApprovePartialFailedPrefix} ${failed.length} ${dict.bulkApprovePartialFailedSuffix}`);
       }
     },
     onError: (err: unknown) => {
+      const dict = getImportsDict();
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Duyệt hàng loạt thất bại. Vui lòng thử lại!";
+        dict.bulkApproveFailed;
       toast.error(message);
     },
   });
@@ -109,9 +120,10 @@ export function useRejectImport() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason?: string }) => importService.reject(id, reason),
     onSuccess: (_, { id }) => {
+      const dict = getImportsDict();
       client.invalidateQueries({ queryKey: importKeys.detail(id) });
       client.invalidateQueries({ queryKey: [...importKeys.all, "list"] });
-      toast.success("Import job rejected");
+      toast.success(dict.importRejectedSuccess);
     },
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Rejection failed";
@@ -126,9 +138,10 @@ export function useReprocessImport() {
   return useMutation({
     mutationFn: (id: string) => importService.reprocess(id),
     onSuccess: (_, id) => {
+      const dict = getImportsDict();
       client.invalidateQueries({ queryKey: importKeys.detail(id) });
       client.invalidateQueries({ queryKey: [...importKeys.all, "list"] });
-      toast.info("Import job queued for reprocessing");
+      toast.info(dict.importReprocessQueued);
     },
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Failed to reprocess";
@@ -143,8 +156,9 @@ export function useResetImports() {
   return useMutation({
     mutationFn: () => importService.reset(),
     onSuccess: (result) => {
+      const dict = getImportsDict();
       client.invalidateQueries({ queryKey: importKeys.all });
-      toast.success(`Đã xóa sạch ${result.data.deletedCount} import jobs`);
+      toast.success(`${dict.resetSuccessPrefix} ${result.data.deletedCount} ${dict.resetSuccessSuffix}`);
     },
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Reset failed";
@@ -152,3 +166,4 @@ export function useResetImports() {
     },
   });
 }
+

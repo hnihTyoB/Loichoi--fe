@@ -35,6 +35,7 @@ import {
   useBulkApproveImports,
   useResetImports,
 } from "@/hooks/use-imports";
+import { useTranslation } from "@/hooks/use-translation";
 import { PermissionGate } from "@/components/shared/permission-gate";
 import { PageHeader, PaginationNav } from "@/components/shared/admin-ui";
 import { PERMISSIONS } from "@/lib/constants";
@@ -46,15 +47,16 @@ import { isBulkApproveCandidate, getMinConfidence } from "@/types/import.types";
 // ──────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: ImportJobStatus }) {
+  const { t, isMounted } = useTranslation();
   const map: Record<ImportJobStatus, { label: string; className: string }> = {
-    DISCOVERED: { label: "Discovered", className: "bg-kawaii-sky/20 text-kawaii-babyblue border-kawaii-sky/40" },
-    PROCESSING: { label: "Processing", className: "bg-amber-100 text-amber-700 border-amber-200" },
-    NEEDS_REVIEW: { label: "Needs Review", className: "bg-orange-100 text-orange-700 border-orange-200" },
-    APPROVED: { label: "Approved", className: "bg-green-100 text-green-700 border-green-200" },
-    IMPORTED: { label: "Published", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-    FAILED: { label: "Failed", className: "bg-red-100 text-red-700 border-red-200" },
-    DUPLICATE: { label: "Duplicate", className: "bg-purple-100 text-purple-700 border-purple-200" },
-    SKIPPED: { label: "Skipped", className: "bg-slate-100 text-slate-600 border-slate-200" },
+    DISCOVERED: { label: isMounted ? t.adminImports.badgeDiscovered : "Discovered", className: "bg-kawaii-sky/20 text-kawaii-babyblue border-kawaii-sky/40" },
+    PROCESSING: { label: isMounted ? t.adminImports.badgeProcessing : "Processing", className: "bg-amber-100 text-amber-700 border-amber-200" },
+    NEEDS_REVIEW: { label: isMounted ? t.adminImports.badgeNeedsReview : "Needs Review", className: "bg-orange-100 text-orange-700 border-orange-200" },
+    APPROVED: { label: isMounted ? t.adminImports.badgeApproved : "Approved", className: "bg-green-100 text-green-700 border-green-200" },
+    IMPORTED: { label: isMounted ? t.adminImports.badgePublished : "Published", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+    FAILED: { label: isMounted ? t.adminImports.badgeFailed : "Failed", className: "bg-red-100 text-red-700 border-red-200" },
+    DUPLICATE: { label: isMounted ? t.adminImports.badgeDuplicate : "Duplicate", className: "bg-purple-100 text-purple-700 border-purple-200" },
+    SKIPPED: { label: isMounted ? t.adminImports.badgeSkipped : "Skipped", className: "bg-slate-100 text-slate-600 border-slate-200" },
   };
   const cfg = map[status] ?? { label: status, className: "bg-slate-100 text-slate-600 border-slate-200" };
   return (
@@ -76,6 +78,7 @@ function ConfidenceDot({ value }: { value: number | null }) {
 // ──────────────────────────────────────────────
 
 export default function ImportsPage() {
+  const { t, isMounted } = useTranslation();
   const [filter, setFilter] = useState<ImportJobFilter>({ page: 1, limit: 20 });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
@@ -104,7 +107,7 @@ export default function ImportsPage() {
   const resetMutation = useResetImports();
 
   function handleResetDb() {
-    if (window.confirm("Bạn có chắc chắn muốn xóa sạch toàn bộ bản nháp và import jobs cũ không?")) {
+    if (window.confirm(isMounted ? t.adminImports.resetDbConfirm : "Bạn có chắc chắn muốn xóa sạch toàn bộ bản nháp và import jobs cũ không?")) {
       resetMutation.mutate();
     }
   }
@@ -132,14 +135,38 @@ export default function ImportsPage() {
     setSelectedIds(new Set());
   }
 
+  const getStatusFilterLabel = (status?: ImportJobStatus) => {
+    if (!status) return isMounted ? t.adminImports.allStatuses : "Tất cả trạng thái";
+    switch (status) {
+      case "NEEDS_REVIEW":
+        return isMounted ? t.adminImports.statusNeedsReview : "Cần xét duyệt (Needs Review)";
+      case "DUPLICATE":
+        return isMounted ? t.adminImports.statusDuplicate : "Trùng lặp (Duplicate)";
+      case "FAILED":
+        return isMounted ? t.adminImports.statusFailed : "Lỗi xử lý (Failed)";
+      case "IMPORTED":
+        return isMounted ? t.adminImports.statusImported : "Đã phát hành (Published)";
+      case "SKIPPED":
+        return isMounted ? t.adminImports.statusSkipped : "Đã bỏ qua (Skipped)";
+      case "DISCOVERED":
+        return isMounted ? t.adminImports.statusDiscovered : "Đã phát hiện (Discovered)";
+      case "PROCESSING":
+        return isMounted ? t.adminImports.statusProcessing : "Đang xử lý (Processing)";
+      case "APPROVED":
+        return isMounted ? t.adminImports.statusApproved : "Đã duyệt (Approved)";
+      default:
+        return String(status).replace(/_/g, " ");
+    }
+  };
+
   return (
     <PermissionGate permission={PERMISSIONS.IMPORT_READ}>
       <div className="space-y-6">
         {/* ─── Header ─── */}
         <PageHeader
           icon={CloudUpload}
-          title="Discord Imports"
-          description="Xét duyệt và phát hành giao diện bàn phím nhập từ Discord Threads"
+          title={isMounted ? t.adminImports.title : "Discord Imports"}
+          description={isMounted ? t.adminImports.description : "Xét duyệt và phát hành giao diện bàn phím nhập từ Discord Threads"}
           actions={
             <div className="flex items-center gap-2">
               <PermissionGate permission={PERMISSIONS.IMPORT_MANAGE}>
@@ -151,7 +178,7 @@ export default function ImportsPage() {
                   disabled={resetMutation.isPending}
                 >
                   <Trash2 className="h-4 w-4 mr-1.5" />
-                  Dọn sạch DB
+                  {isMounted ? t.adminImports.resetDbBtn : "Dọn sạch DB"}
                 </Button>
               </PermissionGate>
 
@@ -163,7 +190,7 @@ export default function ImportsPage() {
                 disabled={isFetching}
               >
                 <RefreshCw className={`h-4 w-4 mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
-                Làm mới
+                {isMounted ? t.adminImports.refreshBtn : "Làm mới"}
               </Button>
 
               <PermissionGate permission={PERMISSIONS.IMPORT_APPROVE}>
@@ -184,7 +211,9 @@ export default function ImportsPage() {
                       ) : (
                         <CheckCheck className="h-4 w-4 mr-1.5" />
                       )}
-                      Duyệt {selectedIds.size} mục đã chọn
+                      {isMounted
+                        ? `${t.adminImports.bulkApproveBtnPrefix} ${selectedIds.size} ${t.adminImports.bulkApproveBtnSuffix}`
+                        : `Duyệt ${selectedIds.size} mục đã chọn`}
                     </Button>
                   </motion.div>
                 )}
@@ -201,7 +230,7 @@ export default function ImportsPage() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm theo tên hoặc #mã số..."
+              placeholder={isMounted ? t.adminImports.searchPlaceholder : "Tìm theo tên hoặc #mã số..."}
               className="pl-9 h-11 rounded-2xl border-2 border-input bg-kawaii-cloud/40 text-kawaii-mocha placeholder:text-kawaii-mocha/40"
             />
           </div>
@@ -214,12 +243,14 @@ export default function ImportsPage() {
                 className="h-11 rounded-2xl border-2 border-input gap-2 text-kawaii-mocha font-semibold text-xs"
               >
                 <SlidersHorizontal className="h-4 w-4" />
-                {filter.status ? filter.status.replace(/_/g, " ") : "Tất cả trạng thái"}
+                {getStatusFilterLabel(filter.status)}
                 <ChevronRight className="h-3.5 w-3.5 ml-auto opacity-50 rotate-90" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-52 rounded-2xl p-2" align="start">
-              <DropdownMenuLabel className="text-xs text-kawaii-mocha/60">Lọc theo trạng thái</DropdownMenuLabel>
+            <DropdownMenuContent className="w-56 rounded-2xl p-2" align="start">
+              <DropdownMenuLabel className="text-xs text-kawaii-mocha/60">
+                {isMounted ? t.adminImports.filterStatusLabel : "Lọc theo trạng thái"}
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuRadioGroup
                 value={filter.status ?? "ALL"}
@@ -232,12 +263,12 @@ export default function ImportsPage() {
                 }
               >
                 {[
-                  { key: "ALL", label: "Tất cả" },
-                  { key: "NEEDS_REVIEW", label: "Cần xét duyệt (Needs Review)" },
-                  { key: "DUPLICATE", label: "Trùng lặp (Duplicate)" },
-                  { key: "FAILED", label: "Lỗi xử lý (Failed)" },
-                  { key: "IMPORTED", label: "Đã phát hành (Published)" },
-                  { key: "SKIPPED", label: "Đã bỏ qua (Skipped)" },
+                  { key: "ALL", label: isMounted ? t.adminImports.allStatus : "Tất cả" },
+                  { key: "NEEDS_REVIEW", label: isMounted ? t.adminImports.statusNeedsReview : "Cần xét duyệt (Needs Review)" },
+                  { key: "DUPLICATE", label: isMounted ? t.adminImports.statusDuplicate : "Trùng lặp (Duplicate)" },
+                  { key: "FAILED", label: isMounted ? t.adminImports.statusFailed : "Lỗi xử lý (Failed)" },
+                  { key: "IMPORTED", label: isMounted ? t.adminImports.statusImported : "Đã phát hành (Published)" },
+                  { key: "SKIPPED", label: isMounted ? t.adminImports.statusSkipped : "Đã bỏ qua (Skipped)" },
                 ].map((s) => (
                   <DropdownMenuRadioItem key={s.key} value={s.key} className="rounded-xl text-xs">
                     {s.label}
@@ -247,7 +278,7 @@ export default function ImportsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Limit selector (ngay sau Lọc theo trạng thái) */}
+          {/* Limit selector */}
           <select
             className="h-11 w-auto min-w-[125px] rounded-2xl border-2 border-input bg-background px-3 text-xs font-semibold text-kawaii-mocha shadow-inner focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/25 cursor-pointer"
             value={filter.limit ?? 20}
@@ -258,11 +289,11 @@ export default function ImportsPage() {
                 page: 1,
               }))
             }
-            aria-label="Số dòng mỗi trang"
+            aria-label={isMounted ? t.adminImports.limitAriaLabel : "Số dòng mỗi trang"}
           >
-            <option value={20}>20 / trang</option>
-            <option value={50}>50 / trang</option>
-            <option value={100}>100 / trang</option>
+            <option value={20}>20 {isMounted ? t.adminImports.limitPerPage : "/ trang"}</option>
+            <option value={50}>50 {isMounted ? t.adminImports.limitPerPage : "/ trang"}</option>
+            <option value={100}>100 {isMounted ? t.adminImports.limitPerPage : "/ trang"}</option>
           </select>
 
           {/* Duplicate filter */}
@@ -283,7 +314,7 @@ export default function ImportsPage() {
             }
           >
             <Copy className="h-3.5 w-3.5" />
-            Nghi trùng
+            {isMounted ? t.adminImports.filterDuplicateBtn : "Nghi trùng"}
           </Button>
 
           {/* High confidence filter */}
@@ -304,12 +335,13 @@ export default function ImportsPage() {
             }
           >
             <Zap className="h-3.5 w-3.5" />
-            Độ tin cậy cao (≥85%)
+            {isMounted ? t.adminImports.filterHighConfidenceBtn : "Độ tin cậy cao (≥85%)"}
           </Button>
 
           {/* Stats summary */}
           <div className="ml-auto text-xs font-semibold text-kawaii-mocha/60">
-            {data?.total ?? 0} tổng cộng · {bulkCandidates.length} đủ điều kiện duyệt nhanh
+            {data?.total ?? 0} {isMounted ? t.adminImports.statsTotal : "tổng cộng"} · {bulkCandidates.length}{" "}
+            {isMounted ? t.adminImports.statsEligible : "đủ điều kiện duyệt nhanh"}
           </div>
         </div>
 
@@ -331,11 +363,15 @@ export default function ImportsPage() {
                   className="h-4 w-4 rounded border-kawaii-sky text-kawaii-babyblue focus:ring-kawaii-sky cursor-pointer"
                 />
                 <label htmlFor="select-all" className="text-xs font-bold text-kawaii-mocha cursor-pointer select-none">
-                  Chọn toàn bộ {bulkCandidates.length} mục có độ tin cậy cao
+                  {isMounted
+                    ? `${t.adminImports.selectAllCandidates} ${bulkCandidates.length} ${t.adminImports.selectAllCandidatesSuffix}`
+                    : `Chọn toàn bộ ${bulkCandidates.length} mục có độ tin cậy cao`}
                 </label>
                 {selectedIds.size > 0 && (
                   <span className="ml-auto text-xs font-semibold text-kawaii-mocha/70">
-                    Đã chọn {selectedIds.size} mục
+                    {isMounted
+                      ? `${t.adminImports.selectedCountPrefix} ${selectedIds.size} ${t.adminImports.selectedCountSuffix}`
+                      : `Đã chọn ${selectedIds.size} mục`}
                   </span>
                 )}
               </motion.div>
@@ -348,12 +384,14 @@ export default function ImportsPage() {
           {isLoading ? (
             <div className="flex items-center justify-center h-48 text-kawaii-mocha/50 text-sm font-semibold">
               <Loader2 className="h-5 w-5 animate-spin mr-2" />
-              Đang tải danh sách imports...
+              {isMounted ? t.adminImports.loadingJobs : "Đang tải danh sách imports..."}
             </div>
           ) : filteredJobs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 gap-3 text-kawaii-mocha/50">
               <CloudUpload className="h-10 w-10 text-kawaii-sky/50" />
-              <p className="text-sm font-semibold">Không tìm thấy import job nào</p>
+              <p className="text-sm font-semibold">
+                {isMounted ? t.adminImports.emptyJobs : "Không tìm thấy import job nào"}
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-kawaii-sky/15">
@@ -408,7 +446,9 @@ export default function ImportsPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-bold text-kawaii-mocha truncate">
                           {draft?.englishName ?? (
-                            <span className="text-kawaii-mocha/50 italic font-normal">Chưa có tên tiếng Anh</span>
+                            <span className="text-kawaii-mocha/50 italic font-normal">
+                              {isMounted ? t.adminImports.noEnglishName : "Chưa có tên tiếng Anh"}
+                            </span>
                           )}
                         </p>
                         {job.thread.discordReferenceNumber && (
@@ -418,19 +458,19 @@ export default function ImportsPage() {
                         )}
                       </div>
                       <p className="text-xs text-kawaii-mocha/55 truncate mt-0.5 font-medium">
-                        Thread gốc: {job.thread.originalName}
+                        {isMounted ? t.adminImports.originalThread : "Thread gốc:"} {job.thread.originalName}
                       </p>
                     </div>
 
                     {/* Flags */}
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       {draft?.isDuplicateCandidate && (
-                        <span title="Nghi ngờ trùng lặp">
+                        <span title={isMounted ? t.adminImports.possibleDuplicateTooltip : "Nghi ngờ trùng lặp"}>
                           <Copy className="h-4 w-4 text-purple-500" />
                         </span>
                       )}
                       {(draft?.flags?.length ?? 0) > 0 && (
-                        <span title={`Cảnh báo: ${draft!.flags!.join(", ")}`}>
+                        <span title={`${isMounted ? t.adminImports.warningTooltipPrefix : "Cảnh báo:"} ${draft!.flags!.join(", ")}`}>
                           <AlertTriangle className="h-4 w-4 text-amber-500" />
                         </span>
                       )}
@@ -460,6 +500,8 @@ export default function ImportsPage() {
                     {/* Detail link */}
                     <Link
                       href={`/imports/${job.id}`}
+                      title={isMounted ? t.adminImports.viewDetailAria : "Xem chi tiết"}
+                      aria-label={isMounted ? t.adminImports.viewDetailAria : "Xem chi tiết"}
                       className="flex-shrink-0 flex h-9 w-9 items-center justify-center rounded-2xl bg-kawaii-cloud/70 hover:bg-kawaii-sky/30 transition-all text-kawaii-mocha/60 hover:text-kawaii-babyblue shadow-sm bouncy-hover"
                     >
                       <ArrowRight className="h-4 w-4" />
@@ -485,3 +527,4 @@ export default function ImportsPage() {
     </PermissionGate>
   );
 }
+
